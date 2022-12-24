@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'Migrate Code Snippets in Xcode'
+title: 'Migrate Xcode Snippets'
 categories: [iOS dev]
 tag: [swift, xcode]
 ---
