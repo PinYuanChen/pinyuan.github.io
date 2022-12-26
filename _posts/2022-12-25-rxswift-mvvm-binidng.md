@@ -5,7 +5,7 @@ categories: [iOS dev]
 tag: [swift, mvvm, rxswift]
 ---
 
-You might have read many articles talking about how to bind view models via RxSwift. But most of them are not suitable for practical use cases. Here I want to share with you how I use MVVM along with RxSwift in my job, and it is
+You might have read many articles about how to bind view models via RxSwift. But most of them are not suitable for practical use cases. Here I want to share with you how I use MVVM along with RxSwift in my job, and it is
 
 * Easy to track data flow
 * Scalable for complex scenarios
@@ -14,7 +14,7 @@ You might have read many articles talking about how to bind view models via RxSw
 Without further ado, let's jump right into it.
 
 ## Two Common Approaches
-Chances are you have already read this type of binding
+Chances are you have read this type of binding
 ```swift
 protocol ViewModelType {
   associatedtype Input
@@ -24,7 +24,7 @@ protocol ViewModelType {
 }
 ```
 
-The drawback is obvious: you have to provide all the inputs and outputs in `func transform`, and you have to deal with them at the same time. It's lack of flexibility because, in reality, the inputs and outputs might trigger at different time. So you might also seen this alternative
+The drawback is obvious: you have to provide all the inputs and outputs in `func transform`, and you have to deal with them at the same time. It lacks flexibility because, in reality, the inputs and outputs might trigger at different time. So you might also have seen this alternative
 
 ```swift
 protocol ViewModelType {
@@ -53,10 +53,10 @@ class SomeViewModel: ViewModelType {
     }
 }
 ``` 
-Well, this method creates two private structs to handle input and output. But the problem is: it deal with them in initialization, and once you have multiple input and output subjects, the `init()` will become pretty messy. 
+Well, this method creates two private structs to handle input and output. But the problem is: it deals with them in initialization, and once you have multiple input and output subjects, the `init()` will become pretty messy. 
 
-## Protocol Comes into Play
-Let's think of it: what's the purpose of creating input and output instances? Because they act as `interfaces`. It might ring a bell to you that there's another one can act as a interface: `protocol`. Since Apple claims Swift is a protocol oriented language, we developers must explore its full potential. Let's see how to build it in a protocol way.
+## Protocol Comes Into Play
+Let's think of it: what's the purpose of creating input and output instances? Because they act as `interfaces`. It might ring a bell to you that there's another one who can act as an interface: `protocol`. Since Apple claims Swift is a protocol-oriented language, we developers must explore its full potential. Let's see how to build it in a protocol way.
 
 ```swift
 protocol ViewModelInput { 
@@ -80,10 +80,10 @@ class ViewModel: ViewModelPrototype {
     var input: ViewModelInput { self }
 }
 ```
-This is the basic structure of protocol design. You may wonder how it work in real cases and what's the benefit. Let me walk you through a typical scenario. 
+This is the basic structure of protocol design. You may wonder how it works in real cases and what's the benefit. Let me walk you through a typical scenario. 
 
 ## Usage Example
-Let's say we have a view controller and it needs to call an api to get data when it shows up. Here is how we define the view controller
+Let's say we have a view controller and it needs to call an API to get data when it shows up. Here is how we define the view controller
 ```swift
 class ViewController: UIViewController {
     var viewModel: ViewModelPrototype?
@@ -114,6 +114,6 @@ private extension ViewController {
      }
 }
 ```
-We declare a `viewModel` variable and its type is an existential container that conforms to `ViewModelPrototype`. When we initialize the view controller, we inject the view model into it as well. In this way, we decouple the vc and vm so we can do testing. Then we create the `bind` function in private extension. The function takes the view model `prototype`, be careful, it's not `ViewModel` but `ViewModelPrototype`, because it forces us to interact with view model through interfaces. You must type `.input` or `.output` to access the view model's properties. And for our human beings, it's much readable for us to trace code because we can easily know whether it's input or output calling. 
+We declare a `viewModel` variable and its type is an existential container that conforms to `ViewModelPrototype`. When we initialize the view controller, we inject the view model into it as well. In this way, we decouple the vc and vm so we can do testing. Then we create the `bind` function in private extension. The function takes the view model `prototype`, be careful, it's not `ViewModel` but `ViewModelPrototype`, because it forces us to interact with view model through interfaces. You must type `.input` or `.output` to access the view model's properties. And for our human beings, it's much more readable for us to trace code because we can easily know whether it's input or output calls. 
 
-That's it. I hope you enjoy it. If you have any question or recommendation, please leave a comment below.
+That's it. I hope you enjoy it. If you have any questions or recommendations, please leave a comment below.
