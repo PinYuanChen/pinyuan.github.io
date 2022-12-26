@@ -87,14 +87,33 @@ Let's say we have a view controller and it needs to call an api to get data when
 ```swift
 class ViewController: UIViewController {
     var viewModel: ViewModelPrototype?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         guard let viewModel = viewModel else { return }
         bind(viewModel)
     }
+
+    private let disposeBag = DisposeBag()
 }
 
 private extension ViewController {
-    func bind(_ viewModel: ViewModelPrototype) { }
+    func bind(_ viewModel: ViewModelPrototype) {
+        viewModel
+            .output
+            .apiResult
+            .withUnretained(self)
+            .subscribe(onNext: { owner, result in
+                // deal with the api result
+            })
+            .disposed(by: disposeBag)
+
+        viewModel
+            .input
+            .sendAPI()
+     }
 }
 ```
+We declare a `viewModel` variable and its type is an existential container that conforms to `ViewModelPrototype`. When we initialize the view controller, we inject the view model into it as well. In this way, we decouple the vc and vm so we can do testing. Then we create the `bind` function in private extension. The function takes the view model `prototype`, be careful, it's not `ViewModel` but `ViewModelPrototype`, because it forces us to interact with view model through interfaces. You must type `.input` or `.output` to access the view model's properties. And for our human beings, it's much readable for us to trace code because we can easily know whether it's input or output calling. 
+
+That's it. I hope you enjoy it. If you have any question or recommendation, please leave a comment below.
