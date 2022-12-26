@@ -48,6 +48,7 @@ class SomeViewModel: ViewModelType {
     }
 
     init() {
+        // initialize two structs and
         // deal with inputs and outputs binding
     }
 }
@@ -55,7 +56,7 @@ class SomeViewModel: ViewModelType {
 Well, this method creates two private structs to handle input and output. But the problem is: it deal with them in initialization, and once you have multiple input and output subjects, the `init()` will become pretty messy. 
 
 ## Protocol Comes into Play
-Let's think of it again: is there a better way to create input and output interfaces? You may ring a bell that protocol might be a better solution. Since Apple claims Swift is a protocol oriented language and protocol can act as a good interface. So let's see how to build it.
+Let's think of it: what's the purpose of creating input and output instances? Because they act as `interfaces`. It might ring a bell to you that there's another one can act as a interface: `protocol`. Since Apple claims Swift is a protocol oriented language, we developers must explore its full potential. Let's see how to build it in a protocol way.
 
 ```swift
 protocol ViewModelInput { 
@@ -79,6 +80,21 @@ class ViewModel: ViewModelPrototype {
     var input: ViewModelInput { self }
 }
 ```
-This is the basic structure of protocol design. You may wonder how it work in real cases. Let me walk you through a typical scenario. 
+This is the basic structure of protocol design. You may wonder how it work in real cases and what's the benefit. Let me walk you through a typical scenario. 
 
 ## Usage Example
+Let's say we have a view controller and it needs to call an api to get data when it shows up. Here is how we define the view controller
+```swift
+class ViewController: UIViewController {
+    var viewModel: ViewModelPrototype?
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        guard let viewModel = viewModel else { return }
+        bind(viewModel)
+    }
+}
+
+private extension ViewController {
+    func bind(_ viewModel: ViewModelPrototype) { }
+}
+```
