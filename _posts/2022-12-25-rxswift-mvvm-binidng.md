@@ -50,6 +50,7 @@ class SomeViewModel: ViewModelType {
     init() {
         // initialize two structs and
         // deal with inputs and outputs binding
+
     }
 }
 ``` 
@@ -71,19 +72,36 @@ protocol ViewModelPrototype {
     var input: ViewModelInput { get }
 }
 ```
-First, we declare an input protocol and define a function that get called from outside. Then we declare an output protocol that pass observable data to views for UI binding. Then we define a protocol to put input and output protocols inside.
-Then the view model class conforms to `ViewModelPrototype`
+First, we create an input protocol and define a `sendAPI` function. Our view controller will call this function when it needs to fetch data. Then we declare an output protocol that pass API result as an observable to views for UI binding. Last, we define a protocol (`ViewModelPrototype`) to put input and output protocols inside.
+The view model class conforms to `ViewModelPrototype` like this:
 
 ```swift
 class ViewModel: ViewModelPrototype {    
     var output: ViewModelOutput { self }
     var input: ViewModelInput { self }
+
+    private let _apiResult = BehaviorRelay<Model?>(value: nil)
+}
+
+extension ViewModel: ViewModelInput {
+    func sendAPI() {
+        // call api and fetch data
+        let result = NetworkManager.callSomeAPI()
+        _apiResult.accept(result)
+    }
+}
+
+extension ViewModel: ViewModelOutput {
+    var apiResult: Observable<Model> {
+        _apiResult.compactMap { $0 }.asObservable()
+    }
 }
 ```
-This is the basic structure of protocol design. You may wonder how it works in real cases and what's the benefit. Let me walk you through a typical scenario. 
+Our view model conforms to input and output protocols in separate extensions. We use a private variable `_apiResult` to store and pass the API result. Then we unwrap the result via `compactMap` and turn it into an observable for a subscription. That's it. This is the basic protocol design. In the next section, I'll walk you through how to bind the view model to the view controller.
 
-## Usage Example
-Let's say we have a view controller and it needs to call an API to get data when it shows up. Here is how we define the view controller
+## Binding
+Let's say we have a view controller and it needs to call an API to get data when it shows up. Here is how we define the view controller:
+
 ```swift
 class ViewController: UIViewController {
     var viewModel: ViewModelPrototype?
@@ -114,6 +132,7 @@ private extension ViewController {
      }
 }
 ```
-We declare a `viewModel` variable and its type is an existential container that conforms to `ViewModelPrototype`. When we initialize the view controller, we inject the view model into it as well. In this way, we decouple the vc and vm so we can do testing. Then we create the `bind` function in private extension. The function takes the view model `prototype`, be careful, it's not `ViewModel` but `ViewModelPrototype`, because it forces us to interact with view model through interfaces. You must type `.input` or `.output` to access the view model's properties. And for our human beings, it's much more readable for us to trace code because we can easily know whether it's input or output calls. 
 
-That's it. I hope you enjoy it. If you have any questions or recommendations, please leave a comment below.
+We declare a `viewModel` variable and its type is an existential container that conforms to `ViewModelPrototype`. When we initialize the view controller, we inject the view model into it. In this way, we decouple the view controller and the view model so we can do testing. Then we create the `bind` function in a private extension. The function takes the view model `prototype`, be careful, it's not `ViewModel` type but `ViewModelPrototype`, because it forces us to interact with the view model through interfaces. You must type `.input` or `.output` to access the view model's properties. And for our human beings, it's much more readable for us to trace code because we can easily know whether it's input or output calls. 
+
+That's it. If you have any questions or recommendations, please leave a comment below. See you at the top!
