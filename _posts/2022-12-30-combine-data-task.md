@@ -9,8 +9,8 @@ Recently I was playing with Combine and I kind of liked its syntax. Combine offe
 
 ## Convert the Contents via tryMap
 First, let's take a look at a typical dataTaskPublisher:
-```swift
 
+```swift
 class NetworkManager {
     static func download(url: URL) -> AnyPublisher<Data, Error> {
         return URLSession.shared.dataTaskPublisher(for: url)
@@ -26,7 +26,6 @@ class NetworkManager {
             .eraseToAnyPublisher()
     }
 }
-
 ```
 We declare a `NetworkManager` and a static download function to handle requests. Inside the function, we put a url into a `dataTaskPublisher`. At default, it will process the task in a global background queue. And after completing the process, the publisher will emits either a tuple containing raw data and a `URLResponse`, or an error.
 
@@ -114,7 +113,6 @@ Normally, we will define a `struct` model to contain the API returned data, usua
 Combine provides us two types of sink operators: `sink(receiveValue:)` and `sink(receiveCompletion:receiveValue:)`. The later one has one more completion block. You can capture the error in its failure case or just break when it is finished. That looks a little bit verbose. So we can also define a function outside to handle it.
 
 ```swift
-
 static func handleCompletion(completion: Subscribers.Completion<Error>) {
     switch completion {
         case .finished:
@@ -123,7 +121,6 @@ static func handleCompletion(completion: Subscribers.Completion<Error>) {
             print(error.localizedDescription)
     }
 }
-
 ```
 
 that makes our code looks neat
@@ -140,7 +137,7 @@ subscription = NetworkManager
             })
 ```
 ## Background Optimization
-
+Our `NetworkManager.download(url:)` function switches from background to main queue and sinks the data to decoder. Here we can do a little optimization by putting the time-consuming decoding job to the background. We can define a generic which conforms to Codable and do the decoding inside the download function:
 
 ```swift
 static func download<T: Codable>(url: URL, type: T.Type) -> AnyPublisher<T, Error> {
@@ -151,3 +148,16 @@ static func download<T: Codable>(url: URL, type: T.Type) -> AnyPublisher<T, Erro
             .eraseToAnyPublisher()
 }
 ```
+
+Whenever you need to use it, just pass in the model type you've already defined:
+
+```swift
+subscription = NetworkManager
+            .download(url: url, type: [Model].self)
+            .sink(receiveCompletion: NetworkManager.handleCompletion,
+                  receiveValue: { [weak self] result in
+                // the same
+            })
+```
+
+That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 👊
