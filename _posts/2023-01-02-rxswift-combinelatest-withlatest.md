@@ -74,9 +74,66 @@ The rule is: when the first emits an item, it will fetch the second source and p
 ![marble-withLatestFrom](/assets/posts-images/marble-withlatestfrom.png)
 
 ## zip
+`zip` is similar to `combineLatest` in many ways: they both combine up to 8 streams, they are triggered when each of streams emit items. The main difference is `zip` fetches items from sources in order. 
+
+```swift
+Observable
+    .zip(first, second) { $0 + $1 }
+    .subscribe(onNext: { print($0) })
+    .disposed(by: disposeBag)
+
+first.onNext("1")
+second.onNext("A")
+first.onNext("2")
+second.onNext("B")
+second.onNext("C")
+second.onNext("D")
+first.onNext("3")
+first.onNext("4")
+
+/* print out
+1A
+2B
+3C
+4D
+*/
+```
+
+You can think of it like using an index to fetch elements from two different arrays. Here is the marble diagram for `zip`:
 
 ![marble-zip](/assets/posts-images/marble-zip.png)
 
 ## merge
+`merge` simply combines multiple sources and when each of them emits an element you will get noticed. 
+
+```swift
+Observable
+    .of(first, second)
+    .merge()
+    .subscribe(onNext: { print($0) })
+    .disposed(by: disposeBag)
+
+first.onNext("1")
+second.onNext("A")
+first.onNext("2")
+second.onNext("B")
+second.onNext("C")
+second.onNext("D")
+first.onNext("3")
+first.onNext("4")
+
+/* print out
+1
+A
+2
+B
+C
+D
+3
+4
+*/
+```
 
 ![marble-merge](/assets/posts-images/marble-merge.png)
+
+That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 😎
