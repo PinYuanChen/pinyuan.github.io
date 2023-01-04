@@ -5,7 +5,7 @@ categories: [iOS dev]
 tag: [swift, rxswift]
 ---
 
-Let's get straight to the point. What's the differences?
+Let's get straight to the point. What're the differences?
 
 ## combineLatest
 It combines multiple observable sources and when each of them emits an item, it will fetch the other sources' latest items and merge them into a single observable.
@@ -43,12 +43,12 @@ first.onNext(4)
 */
 ```
 
-Notice that at the beginning, when the first emitted "1", the `combineLatest` operator didn't do anything. Because at this point the second source didn't produce any item. Until the second source produced the first string "A" then the `combineLatest` started working. From then on, whenever each of them emitted a fresh item, the operator combined it with the other one's latest item and passed through to the subscriber. 
+Notice that at the beginning, when the first emitted "1", the `combineLatest` operator didn't do anything. Because at this point the second source didn't produce any item. Until the second source produced the first string "A" then the `combineLatest` started working. From then on, whenever each of them emitted a fresh item, the operator combined it with the other one's latest item and passed it to the subscriber. 
 
 You can only put up to 8 sources into `combineLatest`. But...of course, you [hack](https://stackoverflow.com/questions/57071640/more-than-8-parameters-in-combinelatest-using-rxswift) it by combining other `combineLatest` observers to surpass the number limit.
 
 ## withLatestFrom
-`withLatestFrom` might sounds similar to `combineLatest` but actually their mechanisms are quite different. Let's take a look at an example:
+`withLatestFrom` might sound similar to `combineLatest` but actually, their mechanisms are quite different. Let's take a look at an example:
 
 ```swift
 let first = PublishSubject<String>()
@@ -75,7 +75,7 @@ first.onNext("4")
 4D
 */
 ```
-The rule is: when the first source emits an item, it will fetch the second source's latest item and pass them to the subscriber. You can only put one parameter in `withLatestFrom`. And jst like `combineLatest`, `withLatestFrom` only works when both sources have at least one value. On top of that, notice when the second emits "B" and "C", the print function doesn't fire. The reason is that we observe the change of the first source. The first source is the main character and only when it passes a new item then will we check the the second source's value. If the first source doesn't emit a new one, the observer doesn't care about the second source's changes.  
+The rule is: when the first source emits an item, it will fetch the second source's latest item and pass them to the subscriber. You can only put one parameter in `withLatestFrom`. And just like `combineLatest`, `withLatestFrom` only works when both sources have at least one value. On top of that, notice when the second emits "B" and "C", the print function doesn't fire. The reason is that we observe the change of the first source. The first source is the main character and only when it passes a new item then will we check the second source's value. If the first source doesn't emit a new one, the observer doesn't care about the second source's changes.  
 
 ![marble-withLatestFrom](/assets/posts-images/marble-withlatestfrom.png)
 
