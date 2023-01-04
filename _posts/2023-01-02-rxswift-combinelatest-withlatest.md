@@ -8,7 +8,7 @@ tag: [swift, rxswift]
 Let's get straight to the point. What's the differences?
 
 ## combineLatest
-It combines multiple observables and whenever each of them emits an item, it will fetch other sources' latest item and put them together.  
+It combines multiple observable sources and when each one of them emits an item, it will fetch other sources' latest items, merge them and pass the combination as a single observable.
 
 ![marble-combineLatest](/assets/posts-images/marble-combinelatest.png)
 
@@ -43,10 +43,12 @@ first.onNext("4")
 */
 ```
 
-Notice that at the beginning when the first emitted "1", the `combineLatest` operator didn't pass the value downstream. Until the second sent "A" then the `combineLatest` formed them into a tuple. From then on, whenever each of them sent an item, it would combined with the other source's latest item. You can only put up to 8 parameters into `combineLatest`. And...of course, you [hack](https://stackoverflow.com/questions/57071640/more-than-8-parameters-in-combinelatest-using-rxswift) it by combining other `combineLatest` observers to observe more than 8 sources.
+Notice that at the beginning when the first emitted "1", the `combineLatest` operator didn't do anything. Because at this point the second source didn't produce any item yet. Until the second sent "A" then the `combineLatest` started working. From then on, whenever each one of them produced a fresh item, the operator combined it with the other source's latest value and passed through to the subscriber. 
+
+You can only put up to 8 parameters into `combineLatest`. But...of course, you [hack](https://stackoverflow.com/questions/57071640/more-than-8-parameters-in-combinelatest-using-rxswift) it by combining other `combineLatest` observers to surpass the number limit.
 
 ## withLatestFrom
-`withLatestFrom` might sounds similar to `combineLatest` but actually their mechanisms are different. You can only put one parameter in `withLatestFrom`. Let's take a look at an example:
+`withLatestFrom` might sounds similar to `combineLatest` but actually their mechanisms are quite different. You can only put one parameter in `withLatestFrom`. Let's take a look at an example:
 
 ```swift
 first
