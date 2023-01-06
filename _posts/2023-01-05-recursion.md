@@ -1,13 +1,13 @@
 ---
 layout: post
-title: 'A Recursion Issue'
+title: 'Late Deallocation Caused By Nested Closures'
 categories: [iOS dev]
 tag: [swift, recursion, closure]
 ---
 
-I assume you have basic concepts about Retain Cycle and know how to avoid it by adding `[weak self]` inside a closure. Chances are you will use `guard` to unwrap `self` to make your code looks sharp. But do you know under some circumstances it will cause problems?
+I assume you have basic concepts about Retain Cycle and know how to avoid it by adding `[weak self]` inside a closure. But even if you've done everything right, you might still run into some problems that you cannot release objects at proper time. 
 
-Take a look at this example, you might spot the problem right away.
+The code below shows a recursive call scenario. Upon entering the `DetailViewController`, we execute the `pay` function and call the class function `payMoney`, which is a simplified function simulating API calling. Inside the `payMoney` function, it simply returns an empty closure. But that's not the point. The point is in the `payMoney`'s callback, we monitor the `retryCount` and after one second we call the `pay` function recursively if the `retryCount` is greater than zero. Have you spotted any problems?  
 
 ```swift
 class PayAPI {
@@ -46,9 +46,14 @@ class DetailViewController: UIViewController {
 }
 
 ```
+Everything looks just fine. We use `[weak self]` inside the `payMoney`'s callback to prevent memory leak. We use `guard` to unwrap `self` as many people will do to get rid of optional mark("?"). Then we call the `pay` function inside the `asyncAfter`'s closure. Nothing suspicious, right? 
 
-Apple's [document](https://developer.apple.com/documentation/xcode/making-changes-to-reduce-memory-use)
+Well, if you leave the `DetailViewController` during the recursive calls, you will find that even the recursion still goes on. You can download the code here and test by yourself. That seems like a memory leak. But how does it happen?
+
+Although it seems like a memory leak, it's actually not. Apple's [document](https://developer.apple.com/documentation/xcode/making-changes-to-reduce-memory-use) defines a memory leak as :
 
 >
-A memory leak occurs when allocated memory becomes unreachable and the app can’t deallocate it. Allowing an allocated-memory pointer to go out of scope without freeing the memory can cause a memory leak.
+A memory leak occurs when allocated memory becomes unreachable and the app can’t deallocate it. 
 >
+
+At this case, the memory is not unreachable. The proof is after the recursion hits the bottom case, the `DetailViewController` will be released. You will see the `deinit` do print out the message. So it is not a leak case, but a "late dallocation" issue. That is, the object doesn't release at your expected moment.
