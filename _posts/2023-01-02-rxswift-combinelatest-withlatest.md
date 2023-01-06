@@ -80,7 +80,7 @@ The rule is: when the first source emits an item, it will fetch the second sourc
 ![marble-withLatestFrom](/assets/posts-images/marble-withlatestfrom.png)
 
 ## zip
-`zip` is similar to `combineLatest` in many ways: they both combine up to 8 sources, they are triggered when each of sources emit new items. The main difference is `zip` fetches items in order. Here is an usage example:
+`zip` is similar to `combineLatest` in many ways: they both combine up to 8 sources and they are triggered when each of the sources emits a new item. The main difference is `zip` fetches items in the order. Here is an usage example:
 
 ```swift
 let first = PublishSubject<String>()
