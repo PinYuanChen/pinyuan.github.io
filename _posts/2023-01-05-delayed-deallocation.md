@@ -48,12 +48,12 @@ class DetailViewController: UIViewController {
 ```
 Everything looks just fine. We use `[weak self]` inside the `payMoney`'s callback to prevent memory leaks. We use `guard` to unwrap `self` as many people will do to get rid of the annoying optional mark("?"). Then, we call the `pay` function inside the `asyncAfter`'s closure. Nothing suspicious, right? 
 
-However, if you leave the `DetailViewController` during the recursive calls, you will see that the recursion continues even though you have left the `DetailViewController`. Seems like a memory leak occurs. But how does that happen?
+However, if you leave the `DetailViewController` during the recursive calls, you will see that the recursion continues even though you have left the `DetailViewController`. Hmmm...seems like a memory leak. But how does it happen?
 
-Though it seems pretty like a leak, it's actually not. Apple's [document](https://developer.apple.com/documentation/xcode/making-changes-to-reduce-memory-use) defines a memory leak as :
+Well, it's actually not. According to Apple's [document](https://developer.apple.com/documentation/xcode/making-changes-to-reduce-memory-use), a memory leak occurs
 
 >
-A memory leak occurs when allocated memory becomes unreachable and the app can’t deallocate it. 
+when allocated memory becomes unreachable and the app can’t deallocate it. 
 >
 
 The memory is not unreachable in this case. When the recursion hits the bottom case, the `DetailViewController` will be released, as seen by the `deinit` message being printed. This is not a memory leak, but rather a "delayed deallocation" issue, meaning the object is not being released at the expected time.
@@ -63,5 +63,41 @@ If we look at the code again, we can see that `asyncAfter` is a nested closure w
 While browsing the Internet, I found Besher Al Maleh's [article](https://medium.com/@almalehdev/you-dont-always-need-weak-self-a778bec505ef) to be extremely helpful. I highly recommend reading it. The article also includes an epic flowchart for determining when to use `weak self` inside a closure.
 
 ![closure-weak-self-decision](https://miro.medium.com/max/4800/1*yHX-8dJrQpH7R2hfM_21MQ.webp)
+
+Maleh's [demo sample](https://github.com/almaleh/weak-self) also provides an example of delayed deallocation caused by a sempaphore:
+
+```swift
+func delayedAllocSemaphore() {
+    DispatchQueue.global(qos: .userInitiated).async {
+        let semaphore = DispatchSemaphore(value: 0)
+        print(self.view.description)
+        _ = semaphore.wait(timeout: .now() + 99.0)
+    }
+}
+```
+
+Besides, if you set a long time interval in the `URLSessionConfiguration`, it will also lead to delayed deallocation.
+
+```swift
+
+/* If you execute the URLSession task immediately, but set a long timeout interval, it will delay the deallocation of your controller until you either cancel the task, get a response back, or timeout. Using [weak self] will prevent that delay. Note: Using port 81 on the url helps simulate a request timeout */
+
+func delayedAllocAsyncCall() {
+    let url = URL(string: "https://www.google.com:81")!
+        
+    let sessionConfig = URLSessionConfiguration.default
+    sessionConfig.timeoutIntervalForRequest = 999.0
+    sessionConfig.timeoutIntervalForResource = 999.0
+    let session = URLSession(configuration: sessionConfig)
+        
+    let task = session.downloadTask(with: url) { localURL, _, error in
+        guard let localURL = localURL else { return }
+        let contents = (try? String(contentsOf: localURL)) ?? "No contents"
+        print(contents)
+        print(self.view.description)
+    }
+    task.resume()
+}
+```
 
 That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 🤜🤛
