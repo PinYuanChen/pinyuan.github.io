@@ -25,15 +25,15 @@ struct UserDefaultsWrapper<T: Codable> {
         self.key = key
         self.defaultValue = defaultValue
     }
-
+    
     var wrappedValue: T {
         get {
-            guard let data = userDefaults.object(forKey: key) as? Data else {
+            guard let data = userDefaults.object(forKey: key) as? Data,
+                  let value = try? JSONDecoder().decode(T.self, from: data) else {
                 return defaultValue
             }
-
-            let value = try? JSONDecoder().decode(T.self, from: data)
-            return value ?? defaultValue
+            
+            return value
         }
         set {
             let data = try? JSONEncoder().encode(newValue)
