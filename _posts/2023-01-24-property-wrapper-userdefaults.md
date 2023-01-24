@@ -5,6 +5,15 @@ categories: [iOS dev]
 tag: [swift, property-wrapper, storage]
 ---
 
+
+
+```swift
+struct User: Codable {
+    var firstName: String
+    var lastName: String
+}
+```
+
 ```swift
 @propertyWrapper
 struct UserDefaultsWrapper<T: Codable> {
@@ -35,11 +44,6 @@ struct UserDefaultsWrapper<T: Codable> {
 ```
 
 ```swift
-struct User: Codable {
-    var firstName: String
-    var lastName: String
-}
-
 class UserData {
     @UserDefaultsWrapper(key: "User", defaultValue: User(firstName: "", lastName: "")) var user: User
 }
