@@ -5,8 +5,6 @@ categories: [iOS dev]
 tag: [swift, property-wrapper, storage]
 ---
 
-
-
 ```swift
 struct User: Codable {
     var firstName: String
@@ -51,6 +49,41 @@ class UserData {
 let userData = UserData()
 userData.user = User(firstName: "John", lastName: "Wick")
 ```
+
+```swift
+@propertyWrapper
+struct UserDefaultsWrapper<T: Codable> {
+    ...
+    private var defaultValue: T?
+    ...
+
+    init(key: String, defaultValue: T? = nil) {
+        self.key = key
+        self.defaultValue = defaultValue
+    }
+    
+    var wrappedValue: T? {
+        get {
+            guard let data = userDefaults.object(forKey: key) as? Data,
+                  let value = try? JSONDecoder().decode(T.self, from: data) else {
+                return defaultValue
+            }
+            
+            return value
+        }
+        set {
+            switch newValue {
+            case .none:
+                userDefaults.removeObject(forKey: key)
+            default:
+                let data = try? JSONEncoder().encode(newValue)
+                userDefaults.set(data, forKey: key)
+            }
+        }
+    }
+}
+```
+
 
 ```swift
 extension UserDefaultsWrapper where T: ExpressibleByNilLiteral {
