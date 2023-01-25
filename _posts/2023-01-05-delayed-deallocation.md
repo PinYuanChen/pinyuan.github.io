@@ -50,7 +50,7 @@ Everything looks just fine. We use `[weak self]` inside the `payMoney`'s callbac
 
 However, if you leave the `DetailViewController` during the recursive calls, you will see that the recursion continues even though you have left the `DetailViewController`. Hmmm...seems like a memory leak. But how does it happen?
 
-Well, it's actually not. According to Apple's [document](https://developer.apple.com/documentation/xcode/making-changes-to-reduce-memory-use), a memory leak occurs
+Well, it's actually not a leak. According to Apple's [document](https://developer.apple.com/documentation/xcode/making-changes-to-reduce-memory-use), a memory leak occurs
 
 >
 when allocated memory becomes unreachable and the app can’t deallocate it. 
