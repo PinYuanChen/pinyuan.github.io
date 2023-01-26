@@ -5,9 +5,10 @@ categories: [iOS dev]
 tag: [swift, property-wrapper, storage]
 ---
 
-Swift 5.1 rolls out the property wrapper feature, which allows us encapsulate logic associated to properties into annotations. By adding the annotation you made in front of a property, you can apply the logic directly to the property, reducing boilerplate and improve reusability. In this article, I am going to share a use case of property wrapper to deal with UserDefaults storage.
+Swift 5.1 introduces the property wrapper feature, which allows for encapsulating logic associated with properties into annotations. By adding the annotation in front of a property, you can apply the logic directly to the property, reducing boilerplate and improving reusability. In this article, I will share a use case for property wrappers in dealing with UserDefaults storage.
 
-Let's say we have a struct representing an user's data, and it conforms to `Codable`.
+ For example, let's consider a struct representing a user's data that conforms to  `Codable`.
+
 ```swift
 struct User: Codable {
     var firstName: String
@@ -15,7 +16,7 @@ struct User: Codable {
 }
 ```
 
-Before using a property wrapper, if we need to store/read this struct into/from UserDefaults, we have to create JSONEncoder/JSONDecoder and handle the process. Of course you can avoid this repetitive pattern by putting them into computed property like this:
+Before using property wrappers, if we needed to store or read this struct in or from UserDefaults, we would have to create JSONEncoder/JSONDecoder and handle the process ourselves. To avoid this repetitive pattern, we could put this logic into a computed property like so:
 
 ```swift
 var currentUser: User {
@@ -28,7 +29,7 @@ var currentUser: User {
 }
 ```
 
-But we can make it more reusable by defining a property wrapper to deal with the same scenario. The following code is how we put the logic into a wrapper called `UserDefaultsWrapper`:
+But with property wrappers, we can make this logic more reusable by defining a wrapper specifically for this scenario. The following code shows how we can put this logic into a wrapper called `UserDefaultsWrapper`:
 
 ```swift
 @propertyWrapper
@@ -59,7 +60,7 @@ struct UserDefaultsWrapper<T: Codable> {
 }
 ```
 
-We define a generic `T`, the object we want to store into UserDefaults, which conforms to `Codable`. At initialization, we pass in the key and default value so when the value is empty in UserDefaults, we can get the default value we define. The usage will be like this:
+We define a generic `T`, which represents the object we want to store in UserDefaults and conforms to `Codable`. At initialization, we pass in the key and a default value, so when the value is empty in UserDefaults, we can get the default value we defined. The usage will be like this:
 
 ```swift
 class UserData {
@@ -71,9 +72,9 @@ print(userData.user) // User(firstName: "", lastName: "")
 userData.user = User(firstName: "John", lastName: "Wick")
 print(userData.user) // User(firstName: "John", lastName: "Wick")
 ```
-We put the `@UserDefaultsWrapper` annotation before the declaration of the variable. So whenever we access the `userData.user`, it fetches data from UserDefaults with the key "User". And when you assign a new value to the variable, it automatically save the new value into UserDefaults, which is pretty intuitive and helpful.
+We put the `@UserDefaultsWrapper` annotation before the declaration of the variable. So whenever we access userData.user, it fetches data from UserDefaults with the key "User". And when you assign a new value to the variable, it automatically saves the new value into UserDefaults, which is pretty intuitive and helpful.
 
-We might want our wrapper to be more flexible on dealing with `nil`. You can modify the code in this way:
+To make the wrapper more flexible in dealing with `nil`, you can modify the code in the following way:
 
 ```swift
 @propertyWrapper
@@ -108,7 +109,7 @@ struct UserDefaultsWrapper<T: Codable> {
     }
 }
 ```
-By changing the `wrappedValue` and the `defaultValue` into optionals, we can get `nil` when there is nothing inside. Inside the `wrappedValue`'s setter, we use `switch` to check if the newValue is equal to `nil`, and if so, we remove the object.
+By changing the `wrappedValue` and the `defaultValue` into optionals, we can get `nil` when there is nothing stored in UserDefaults. Inside the `wrappedValue`'s setter, we use a `switch` statement to check if the `newValue` is equal to `nil`, and if it is, we remove the object from UserDefaults.
 And since we assign `nil` to default value at initialization, we don't have to give a default value anymore when initializing the property.
 
 ```swift
@@ -117,7 +118,7 @@ class UserData {
 }
 ```
 
-Someone may not pleased to see the `wrappedValue` and the `defaultValue` set to optionals. John Sundell offers an [alternative](https://www.swiftbysundell.com/articles/property-wrappers-in-swift/) to suit your needs. You can specify the `T` to the type conforming to the `ExpressibleByNilLiteral` protocol, which means the same the `T` is the `Optional` type, since only the Optional type conforms to this protocol.
+Someone may not be pleased to see the `wrappedValue` and the `defaultValue` set to optionals. John Sundell offers an [alternative](https://www.swiftbysundell.com/articles/property-wrappers-in-swift/) to suit your needs. You can specify `T` as a type that conforms to the `ExpressibleByNilLiteral` protocol, which means that `T` is the same as an `Optional` type, since only the Optional type conforms to this protocol.
 
 ```swift
 extension UserDefaultsWrapper where T: ExpressibleByNilLiteral {
@@ -127,7 +128,7 @@ extension UserDefaultsWrapper where T: ExpressibleByNilLiteral {
 }
 ```
 
-There is one more thing you need to take care of. You have to avoid crash when assign `nil` to the property. Sundell uses a protocol to check if the value is `nil` before setting the value.
+One more thing to keep in mind is to avoid a crash when assigning `nil` to the property. Sundell uses a protocol to check if the value is nil before setting it.
 
 ```swift
 private protocol AnyOptional {
@@ -162,6 +163,7 @@ struct UserDefaultsWrapper<T: Codable> {
 
 In this way, you can get and set `nil` from the property without adding optional marks to the `wrappedValue` and the `defaultValue`.
 
-The property wrapper feature allows us to do lots of customization to properties' attached behaviors while we can access them like normal unwrapped properties at the same time. I believe the property wrapper will become an important feature since we can see it heavily used in `SwiftUI` and `Combine`. However, we should avoid abusing it by hiding too much complicated logic inside for others might find it obscure to understand what it have done underneath the hood. You also have to watch out side effects such as race condition when using it. 
+
+The property wrapper feature allows us to do a lot of customization to properties' attached behaviors while still being able to access them like normal unwrapped properties. I believe the property wrapper will become an important feature, since we can see it being heavily used in SwiftUI and Combine. However, we should avoid abusing it by hiding too much complicated logic inside, as others might find it difficult to understand what it's doing under the hood. Besides, be mindful of side effects such as race conditions when using it.
 
 That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 👹
