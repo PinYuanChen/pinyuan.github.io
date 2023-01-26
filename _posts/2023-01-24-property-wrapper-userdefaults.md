@@ -5,12 +5,30 @@ categories: [iOS dev]
 tag: [swift, property-wrapper, storage]
 ---
 
+Swift 5.1 rolls out the property wrapper feature, which allows us encapsulate logic associated to properties into annotations. By adding the annotation you made in front of a property, you can apply the logic directly to that property, reducing boilerplate and improve reusability. In this article I am gonna share a use case of property wrapper to deal with UserDefaults storage.
+
+Let's say we have a struct representing a user's data, and it conforms to `Codable`.
 ```swift
 struct User: Codable {
     var firstName: String
     var lastName: String
 }
 ```
+
+Before using a property wrapper, if we need to store/read this struct into/from UserDefaults, we have to create JSONEncoder/JSONDecoder and handle the process. Of course you can avoid this repetitive pattern by putting them into computed property like this:
+
+```swift
+var currentUser: User {
+    get {
+        // read from UserDefaults
+    }
+    set {
+        // store into UserDefaults
+    }
+}
+```
+
+But we can make it more reusable by defining a property wrapper to deal with the same scenario. The following code is how we put the logic into a wrapper called `UserDefaultsWrapper`:
 
 ```swift
 @propertyWrapper
@@ -41,14 +59,21 @@ struct UserDefaultsWrapper<T: Codable> {
 }
 ```
 
+We define a generic `T` that conforms to `Codable` and this `T` is the object we want to store into UserDefaults. At initialization, we pass the key and default value in here, so when the value is empty in UserDefaults, we can get the default value we define. The usage will be like this:
+
 ```swift
 class UserData {
     @UserDefaultsWrapper(key: "User", defaultValue: User(firstName: "", lastName: "")) var user: User
 }
 
 let userData = UserData()
+print(userData.user) // User(firstName: "", lastName: "")
 userData.user = User(firstName: "John", lastName: "Wick")
+print(userData.user) // User(firstName: "John", lastName: "Wick")
 ```
+We put the `@UserDefaultsWrapper` annotation before the declaration of the variable. So whenever we get the value from the `userData.user`, it fetches data from UserDefaults with the key "User". And when you assign a new value to it, it automatically save it into UserDefaults. That's pretty intuitive and helpful. The property wrapper do the retrieving/saving stuff underneath the hood.
+
+We might want our wrapper to be more flexible to deal with `nil`. You can modify the code in this way:
 
 ```swift
 @propertyWrapper
