@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'Do Not Create Your SUT in the setUp Method'
+title: 'Do Not Create Your SUT in the setUpWithError Method'
 categories: [iOS dev]
 tag: [swift, unit-test, tdd]
 ---
@@ -34,7 +34,7 @@ class SomeClassTests: XCTestCase {
 
 XCTestFramework initiates a unique instance for each tests. Therefore, the sut class cannot be shared through multiple test cases. 
 
-Whenever we create a unit test class file, the template offers us `setUp` and `tearDown` default implementations. As addressed by the comments, we will invoke the `setUp` method before we execute each test and call the `tearDown` after we finish the case. Many developers tend to create their system under test (SUT) inside the `setUp` and set it to `nil` in the `tearDown` like the following code:
+Whenever we create a unit test class file, the template offers us `setUpWithError` and `tearDownWithError` default implementations. As addressed by the comments, we will invoke the `setUpWithError` method before we execute each test and call the `tearDownWithError` after we finish the case. Many developers tend to create their system under test (SUT) inside the `setUpWithError` and set it to `nil` in the `tearDownWithError` like the following code:
 
 ```swift
 
