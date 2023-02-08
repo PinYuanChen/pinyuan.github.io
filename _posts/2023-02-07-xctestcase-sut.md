@@ -5,10 +5,10 @@ categories: [iOS dev]
 tag: [swift, unit-test, tdd]
 ---
 
-As a newbie approaching the unit test, you may find it confusing to configure your system under test (SUT). You may lead to unexpected error if you are not familiar with the XCTest Framework's mechanism. Besides, in different scenarios you might need different configurations of your SUT, and you might wonder what's the more efficient way to deal with it. In this article, I am gonna dive in test cases' lifecycle, and introduce a better way to create SUTs rather than initialize them in the `setUpWithError`.
+As a beginner in unit testing, you may face confusion when setting up your system under test (SUT). If you're not familiar with the workings of the XCTest Framework, you may encounter unexpected errors. Additionally, different test scenarios may require different SUT configurations, making it unclear how to set up your SUT in the most efficient way. In this article, I'll delve into the lifecycle of test cases and provide a better method for creating a SUT instead of initializing it in the `setUpWithError` method.
 
 ## A XCTestCase's Lifecycle
-A common mistake people made is like this example: 
+A common mistake is like this: 
 
 ```swift
 import XCTest
@@ -35,11 +35,9 @@ class SomeClassTests: XCTestCase {
 }
 ```
 
-We create a sut in the `SomeClassTests` scope and assume its property `val` will continue being modified as it passes through a series of tests. However, things don't go as expected, the failing message shows that the `val` doesn't equal to 2. How does that happen?
+We create the SUT in the `SomeClassTests` scope and assume its property `val` will persist across multiple test cases. However, the failing test message shows it's not, as the `val` in `test_sut_addAnotherOne` doesn't equal 2. This happens because the XCTestFramework creates a unique instance for each test case, meaning that the SUT is independent between test cases and does not persist from one case to another.
 
-XCTestFramework initiates a unique instance for each tests, that is, they are independent from each other that they don't share the same sut. Since each cases has its fresh new sut, should we initiate it inside the test case scope to avoid confusion? Yet this seems cumbersome. 
-
-Many developers tend to create their system under test (SUT) inside the `setUpWithError` and set it to `nil` in the `tearDownWithError` (the old names before Xcode 11.4 are `setUp` and `tearDown`). As addressed by the comments, the compiler will invoke the `setUpWithError` method before executing a test case and call the `tearDownWithError` after finishing it. The implementation looks like the following:
+One solution to this problem might be to initialize the SUT inside each test case, but this approach can quickly become cumbersome. To avoid this, many developers create the SUT inside the `setUpWithError` method and set it to `nil` in the `tearDownWithError` method (the old names before Xcode 11.4 were `setUp` and `tearDown`). The `setUpWithError` method is invoked before each test case, and the `tearDownWithError` method is called after each test case has finished. Here is an example of this implementation:
 
 ```swift
 var sut: SomeClass!
@@ -53,11 +51,11 @@ override func tearDownWithError() throws {
 }
 ```
 
-The downside of this centralized initialization is lack of flexibility on the sut configuration. As mentioned at the opening of the article, we need to test different scenarios that may require different setups. This method makes it difficult to adjust our sut. Though you can use property injection to achieve the goal, it will add much more boilerplate in each test cases. On top of that, you need to scroll up/down checking the sut setup to understand the whole context, which makes it harder to read.
+The drawback of this centralized initialization approach is that it lacks flexibility in configuring the SUT. As previously mentioned, we need to test various scenarios that may require different setups. This method makes it challenging to modify the SUT. While property injection can be used to achieve this, it would add a lot of boilerplate code to each test case. On top of that, you would need to scroll up or down to check the SUT setup, making it harder to understand the context and read the code.
 
 ## Create SUTs via Factory Methods
 
-An ideal way to solve this problem is to use a factory method. You can tail your sut through constructor injection matching the test case. For example:
+An ideal solution to this problem is to use a factory method. By using constructor injection, you can tailor your SUT to match the specific requirements of each test case. For example:
 
 ```swift
 private func makeSUT(account: String? = nil, password: String? = nil) -> Validator {
@@ -65,6 +63,7 @@ private func makeSUT(account: String? = nil, password: String? = nil) -> Validat
 }
 ```
 
+You can call this helper function to create the SUT you need:
 
 ```swift
 func test_empty_account {
