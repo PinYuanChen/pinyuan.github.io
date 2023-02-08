@@ -53,7 +53,7 @@ override func tearDownWithError() throws {
 
 The drawback of this centralized initialization approach is that it lacks flexibility in configuring the SUT. As previously mentioned, we need to test various scenarios that may require different setups. This method makes it challenging to modify the SUT. While property injection can be used to achieve this, it would add a lot of boilerplate code to each test case. On top of that, you would need to scroll up or down to check the SUT setup, making it harder to understand the context and read the code.
 
-## Create SUTs via Factory Methods
+## Create Your SUT via A Factory Method
 
 An ideal solution to this problem is to use a factory method. By using constructor injection, you can tailor your SUT to match the specific requirements of each test case. For example:
 
@@ -81,3 +81,7 @@ func test_empty_password {
     // ...
 }
 ```
+
+In this way, we easily resolve the configuration issue. By creating the SUT within each test case, as it lives in the test case scope, also improves readability. But it doesn't mean the `setUpWithError` function is useless. In some cases, when global state needs to be set up and torn down, such as a singleton or database, using the `setUpWithError` and `tearDownWithError` may be a suitable choice.
+
+That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 😷
