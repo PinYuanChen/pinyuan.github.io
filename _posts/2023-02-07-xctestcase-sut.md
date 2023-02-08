@@ -58,8 +58,13 @@ The drawback of this centralized initialization approach is that it lacks flexib
 An ideal solution to this problem is to use a factory method. By using constructor injection, you can tailor your SUT to match the specific requirements of each test case. For example:
 
 ```swift
-private func makeSUT(account: String? = nil, password: String? = nil) -> Validator {
-    return Validator(account: account, password: password)
+class ValidatorTests: XCTestCase {
+
+    //...
+
+    private func makeSUT(account: String? = nil, password: String? = nil) -> Validator {
+        return Validator(account: account, password: password)
+    }
 }
 ```
 
