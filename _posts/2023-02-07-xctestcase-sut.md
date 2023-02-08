@@ -5,7 +5,7 @@ categories: [iOS dev]
 tag: [swift, unit-test, tdd]
 ---
 
-As a newbie approaching the unit test, you may find it confusing to configure your system under test (SUT). You may lead to unexpected error if you are not familiar with the XCTest Framework's mechanism. On top of that, in different scenarios you might need different configurations of your SUT, and you might wonder what's the more efficient way to deal with it. In this article, I am gonna dive in test cases' lifecycle, and introduce a better way to create SUTs rather than initialize them in the `setUpWithError`.
+As a newbie approaching the unit test, you may find it confusing to configure your system under test (SUT). You may lead to unexpected error if you are not familiar with the XCTest Framework's mechanism. Besides, in different scenarios you might need different configurations of your SUT, and you might wonder what's the more efficient way to deal with it. In this article, I am gonna dive in test cases' lifecycle, and introduce a better way to create SUTs rather than initialize them in the `setUpWithError`.
 
 ## A XCTestCase's Lifecycle
 A common mistake people made is like this example: 
@@ -53,7 +53,27 @@ override func tearDownWithError() throws {
 }
 ```
 
-There are several downsides of this option:
-
+The downside of this centralized initialization is lack of flexibility on the sut configuration. As mentioned at the opening of the article, we need to test different scenarios that may require different setups. This method makes it difficult to adjust our sut. Though you can use property injection to achieve the goal, it will add much more boilerplate in each test cases. On top of that, you need to scroll up/down checking the sut setup to understand the whole context, which makes it harder to read.
 
 ## Create SUTs via Factory Methods
+
+An ideal way to solve this problem is to use a factory method. You can tail your sut through constructor injection matching the test case. For example:
+
+```swift
+private func makeSUT(account: String? = nil, password: String? = nil) -> Validator {
+    return Validator(account: account, password: password)
+}
+```
+
+
+```swift
+func test_empty_account {
+    let sut = makeSUT(password: "any pwd")
+    // ...
+}
+
+func test_empty_password {
+    let sut = makeSUT(account: "any account")
+    // ...
+}
+```
