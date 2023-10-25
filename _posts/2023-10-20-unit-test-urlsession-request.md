@@ -62,13 +62,8 @@ final class URLSessionAPIClientTests: XCTestCase {
 }
 ```
 
-Time to write some tests. We want to verify the behaviors of `URLSessionAPIClient` align with our expectations. First, we want to test it can correctly make a GET request by checking its url and http method. So we create another helper function to provide us a GET request.
+Time to write some tests. We want to verify the behaviors of `URLSessionAPIClient` align with our expectations. First, we want to test it can correctly make a GET request by checking its url and http method.
 
-```swift
-private func anyGetRequest() -> URLRequest {
-    return URLRequest(url: .init(string: "http://any-url.com")!)
-}
-```
 Then here comes a problem: how can we make a request using a fake url? We must utilize something to intercept the request and return the response as what we want. And here comes a handy tool called `URLProtocol`, which fulfills what we need.
 Don't be fooled by its name. `URLProtocol` is actually a `class` that exists in iOS's URL loading system. When we fire a url session request, the system automatically creates a `URLProtocol` instance to handle the task. All we have to do is to stub `URLProtocol` and intercept the request by implementing required methods.
 
@@ -123,7 +118,12 @@ override func startLoading() {
 }
 
 ```
-The code detect if the request observer exists, then it finish the loading and invoke callback.
+The code detect if the request observer exists, then it finish the loading and evoke the callback. So the testing process will be
+(1) Setup the request details
+(2) Provide a closure that returns a URLRequest through `observeRequests`
+(3) Setup a expectation waiting for asynchronous execution
+(4) Fire the request
+(5) Wait for completion
 
 ```swift
 private class URLProtocolStub: URLProtocol {
