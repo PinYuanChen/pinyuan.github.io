@@ -50,9 +50,27 @@ public class URLSessionAPIClient: APIClient {
     }
 }
 ```
-It holds a `URLSession` property and use it to make requests. You can either inject a  `URLSession` instance or use the default `shared` one. Then we move on to create a new test file called "URLSessionAPIClientTests". We adopt the factory method mentioned [before](https://pinyuanchen.github.io/posts/xctestcase-sut/) to create instances for our tests. Time to write some tests!
+It holds a `URLSession` property and use it to make requests. You can either inject a  `URLSession` instance or use the default `shared` one. Then we move on to create a new test file called `URLSessionAPIClientTests`. We adopt the factory method mentioned [before](https://pinyuanchen.github.io/posts/xctestcase-sut/) to create instances for our tests. 
 
+```swift
+final class URLSessionAPIClientTests: XCTestCase {
+    // helpers
+    private func makeSUT() -> APIClient {
+        let sut = URLSessionAPIClient()
+        return sut
+    }
+}
+```
 
+Time to write some tests. We want to verify the behaviors of `URLSessionAPIClient` align with our expectations. First, we want to test it can correctly make a GET request by checking its url and http method. So we create another helper function to provide us a GET request.
+
+```swift
+private func anyGetRequest() -> URLRequest {
+    return URLRequest(url: .init(string: "http://any-url.com")!)
+}
+```
+Then here comes a problem: how can we make a request using a fake url? We must utilize something to intercept the request and return the response as what we want. And here comes a handy tool called `URLProtocol`, which fulfills what we need.
+Don't be fooled by its name. `URLProtocol` is actually a `class` that exists in iOS's URL loading system. When we fire a url session request, the system automatically creates a `URLProtocol` instance to handle the task. All we have to do is to stub `URLProtocol` and intercept the request by implementing required methods.
 
 ```swift
 private class URLProtocolStub: URLProtocol {
@@ -135,10 +153,6 @@ private class URLProtocolStub: URLProtocol {
     helpers
 
     ```swift
-    private func makeSUT() -> APIClient {
-        let sut = URLSessionAPIClient()
-        return sut
-    }
     
     private func resultFor(data: Data?, response: URLResponse?, error: Error?) -> HTTPClient.Result {
         
