@@ -72,6 +72,59 @@ private func anyGetRequest() -> URLRequest {
 Then here comes a problem: how can we make a request using a fake url? We must utilize something to intercept the request and return the response as what we want. And here comes a handy tool called `URLProtocol`, which fulfills what we need.
 Don't be fooled by its name. `URLProtocol` is actually a `class` that exists in iOS's URL loading system. When we fire a url session request, the system automatically creates a `URLProtocol` instance to handle the task. All we have to do is to stub `URLProtocol` and intercept the request by implementing required methods.
 
+Upon sub classing `URLProtocol`, we need to implement four required methods.
+>
+class func canInit(with request: URLRequest)
+class func canonicalRequest(for request: URLRequest) -> URLRequest
+func startLoading()
+func stopLoading()
+>
+
+The core function is `startLoading`, at this step we will check if we have anything stubbed beforehand and return them. That's exactly where we intercept requests. We implement the four requirements like the following:
+
+```swift
+private class URLProtocolStub: URLProtocol {
+    override class func canInit(with request: URLRequest) -> Bool {
+        return true
+    }
+        
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        return request
+    }
+
+    override func startLoading() {
+        // We check our stubbed artifacts here.
+    }
+
+    override func stopLoading() {}
+}
+```
+
+For `canInit`, we simply return `true` to pass the validation of request eligibility, and so does the `canonicalRequest`. Since we don't need to do anything on `stopLoading`, we just leave it empty. Now we are gonna focus on `startLoading` method. We need a property to store the request and verify it later. We can simply use a closure property to achieve that.
+
+```swift
+private class URLProtocolStub: URLProtocol {
+    private static var requestObserver: ((URLRequest) -> Void)?
+
+    static func observeRequests(observer: @escaping (URLRequest) -> Void) {
+        requestObserver = observer
+    }
+}
+```
+Since the URL loading system creates the `URLProtocol` for us, we cannot control its creation so we declare it as a static property. We also setup a static function `observeRequests` to provide a interface to store the property. Then in the `startLoading` function we write that:
+
+```swift
+override func startLoading() {
+    if let requestObserver = URLProtocolStub.requestObserver {
+        client?.urlProtocolDidFinishLoading(self)
+        return requestObserver(request)
+    }
+    client?.urlProtocolDidFinishLoading(self)
+}
+
+```
+The code detect if the request observer exists, then it finish the loading and invoke callback.
+
 ```swift
 private class URLProtocolStub: URLProtocol {
         private static var stub: Stub?
