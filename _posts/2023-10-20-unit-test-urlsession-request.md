@@ -7,14 +7,15 @@ tag: [swift, url protocol, url session, unit test, networking]
 
 At the early stages of development, it's common for the backend server to be unfinished. So, how can app developers create tests for network requests in these situations? Furthermore, even with a functioning server, unstable network conditions can lead to inconsistent test results and longer test durations, potentially slowing development. How can we tackle these challenges while still ensuring robust testing for our apps?
 
-As to the first question, the answer is "YES". Even without a complete server, you can still craft tests to assess various scenarios using networking frameworks like URLSession, Alamofire, and others. As per Apple's testing guidelines presented in [WWDC]('https://developer.apple.com/videos/play/wwdc2018/417'), our test suite should resemble a pyramid. At its base are numerous unit tests, followed by a smaller set of medium-sized integration tests, and capped off with a select few end-to-end tests.
-
-According to Apple's description, 
+As to the first question, the answer is "YES". Even without a complete server, you can still craft tests to assess various scenarios using networking frameworks like URLSession, Alamofire, and others. According to Apple's testing guidelines presented in [WWDC]('https://developer.apple.com/videos/play/wwdc2018/417'), our test suite should resemble a pyramid. At its base are numerous unit tests, followed by a smaller set of medium-sized integration tests, and capped off with a select few end-to-end tests.
+ 
 >
 These(Unit tests) are characterized by being simple to read, producing clear failure messages when we detect a problem, and by running very quickly, often in the order of hundreds or thousands of tests per minute.
 >
 
+This post is going to cover how to write unit tests for requests without actually firing networking task. I will probably write a post about end-to-end tests in the future, but right now let's just focus on the unit test topic.
 
+The following is a typical API protocol that defines the result and the load function.
 ```swift
 public protocol APIClient {
     typealias Result = Swift.Result<(Data, HTTPURLResponse), Error>
@@ -23,6 +24,7 @@ public protocol APIClient {
 }
 ```
 
+We create a class named `URLSessionAPIClient` and make it conform to `APIClient` protocol.
 ```swift
 public class URLSessionAPIClient: APIClient {
     private let session: URLSession
@@ -48,6 +50,9 @@ public class URLSessionAPIClient: APIClient {
     }
 }
 ```
+It holds a `URLSession` property and use it to make requests. You can either inject a  `URLSession` instance or use the default `shared` one. Then we move on to create a new test file called "URLSessionAPIClientTests". We adopt the factory method mentioned [before](https://pinyuanchen.github.io/posts/xctestcase-sut/) to create instances for our tests. Time to write some tests!
+
+
 
 ```swift
 private class URLProtocolStub: URLProtocol {
