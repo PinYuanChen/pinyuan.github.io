@@ -64,7 +64,11 @@ final class URLSessionAPIClientTests: XCTestCase {
 
 Time to write some tests. We want to verify the behaviors of `URLSessionAPIClient` align with our expectations. First, we want to test it can correctly make a GET request by checking its url and http method.
 
-Then here comes a problem: how can we make a request using a fake url? We must utilize something to intercept the request and return the response as what we want. And here comes a handy tool called `URLProtocol`, which fulfills what we need.
+```swift
+func test_getFromURL_performsGETRequestWithURL() { }    
+```
+
+Here comes a problem: how can we make a request using a fake url? We must utilize something to intercept the request and return the response as what we want. And here comes a handy tool called `URLProtocol`, which fulfills what we need.
 Don't be fooled by its name. `URLProtocol` is actually a `class` that exists in iOS's URL loading system. When we fire a url session request, the system automatically creates a `URLProtocol` instance to handle the task. All we have to do is to stub `URLProtocol` and intercept the request by implementing required methods.
 
 Upon sub classing `URLProtocol`, we need to implement four required methods.
@@ -170,12 +174,32 @@ override func tearDownWithError() throws {
 }
 ```
 
+Now let's shift to the `test_getFromURL_performsGETRequestWithURL`. The testing process will be like 
+(1) Setup the request details(GET request).
+(2) Setup a expectation instance that waits for asynchronous execution.
+(3) Inject a closure that returns a URLRequest to `URLProtocolStub.observeRequests`. Verify the URL and httMethod inside this closure and fulfill the expectation to end the test.
+(4) Fire the request.
+(5) Wait for completion.
 
-(1) Setup the request details
-(2) Provide a closure that returns a URLRequest through `observeRequests`
-(3) Setup a expectation waiting for asynchronous execution
-(4) Fire the request
-(5) Wait for completion
+```swift
+func test_getFromURL_performsGETRequestWithURL() {
+    let url = URL(string: "http://any-url.com")!
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    let exp = expectation(description: "Wait for request")
+
+    URLProtocolStub.observeRequests { request in
+        XCTAssertEqual(request.url, url)
+        XCTAssertEqual(request.httpMethod, "GET")
+        exp.fulfill()
+    }
+   
+    makeSUT().load(request: request) { _ in }
+        
+    wait(for: [exp], timeout: 1.0)
+}
+```
+
 
 ```swift
 private class URLProtocolStub: URLProtocol {
