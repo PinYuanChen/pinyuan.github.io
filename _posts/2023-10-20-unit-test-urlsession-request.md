@@ -75,7 +75,7 @@ func startLoading()
 func stopLoading()
 >
 
-The core function is `startLoading`, at this step we will check if we have anything stubbed beforehand and return them. That's exactly where we intercept requests. We implement the four requirements like the following:
+The core section is `startLoading`, at this step we will check if we have anything stubbed beforehand and return them as responses. That is, we intercept the request here.  We implement the four requirements like the following:
 
 ```swift
 private class URLProtocolStub: URLProtocol {
@@ -106,7 +106,7 @@ private class URLProtocolStub: URLProtocol {
     }
 }
 ```
-Since the URL loading system creates the `URLProtocol` for us, we cannot control its creation so we declare it as a static property. We also setup a static function `observeRequests` to provide a interface to store the property. Then in the `startLoading` function we write that:
+Since the URL loading system creates the `URLProtocol` instance underneath the hood, we cannot control its creation so we declare `requestObserver` as a static property. We also setup a static function `observeRequests` to provide a interface for outsiders to store the property. Then in the `startLoading` function we add the code:
 
 ```swift
 override func startLoading() {
@@ -118,7 +118,59 @@ override func startLoading() {
 }
 
 ```
-The code detect if the request observer exists, then it finish the loading and evoke the callback. So the testing process will be
+The code detect if the request observer exists, then it finish the loading immediately and evoke the callback. 
+
+Let's move back to the test file. Before you begin testing, there is one more key step to settle down the URLProtocol. In `setupWithError`, we need to register our `URLProtocolStub` to make it works.
+
+```swift
+override func setUpWithError() throws {
+    try super.setUpWithError()
+    URLProtocol.registerClass(URLProtocolStub.self)
+}
+```
+
+Besides, in `tearDownWithError` we need to unregister it and also release the observer closure. 
+
+```swift
+override func tearDownWithError() throws {
+    try super.tearDownWithError()
+    URLProtocol.unregisterClass(URLProtocolStub.self)
+    requestObserver = nil
+}
+```
+
+To make them more readable, we wrap them up into two static functions, identifying their usages, in `URLProtocolStub`.
+
+```swift
+private class URLProtocolStub: URLProtocol {
+    //...
+    static func startInterceptingRequests() {
+        URLProtocol.registerClass(URLProtocolStub.self)
+    }
+        
+    static func stopInterceptingRequests() {
+        URLProtocol.unregisterClass(URLProtocolStub.self)
+        requestObserver = nil
+        stub = nil
+    }
+    //...
+}
+```
+In the test file, we modify the calling as below:
+
+```swift
+override func setUpWithError() throws {
+    try super.setUpWithError()
+    URLProtocolStub.startInterceptingRequests()
+}
+
+override func tearDownWithError() throws {
+    try super.tearDownWithError()
+    URLProtocolStub.stopInterceptingRequests()
+}
+```
+
+
 (1) Setup the request details
 (2) Provide a closure that returns a URLRequest through `observeRequests`
 (3) Setup a expectation waiting for asynchronous execution
