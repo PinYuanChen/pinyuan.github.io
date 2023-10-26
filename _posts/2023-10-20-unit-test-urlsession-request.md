@@ -200,6 +200,82 @@ func test_getFromURL_performsGETRequestWithURL() {
 }
 ```
 
+Run the test and you will see it pass. Our `URLProtocolStub` does perform well behind the scene. 
+
+Now we want to test more scenarios, such as data, error, and url response. How can we do that? 
+Similar to what we do for the request callback, we add other properties and functions inside `URLProtocolStub` to store information. Let's add a private structure `Stub` comprised of information we care about, and add a static function as a interface for storage.
+
+```swift
+private class URLProtocolStub: URLProtocol {
+    private static var stub: Stub?
+    private static var requestObserver: ((URLRequest) -> Void)?
+
+    private struct Stub {
+        let data: Data?
+        let response: URLResponse?
+        let error: Error?
+    }
+
+    //...
+        
+    static func stub(data: Data?, response: URLResponse?, error: Error?) {
+        stub = Stub(data: data, response: response, error: error)
+    }
+}
+```
+
+Then we add some code to the `startLoading` function to check these info iteratively.
+
+```swift
+override func startLoading() {
+            
+    if let requestObserver = URLProtocolStub.requestObserver {
+        client?.urlProtocolDidFinishLoading(self)
+        return requestObserver(request)
+    }
+            
+    if let data = URLProtocolStub.stub?.data {
+        client?.urlProtocol(self, didLoad: data)
+    }
+            
+    if let response = URLProtocolStub.stub?.response {
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+    }
+            
+    if let error = URLProtocolStub.stub?.error {
+        client?.urlProtocol(self, didFailWithError: error)
+    }
+            
+    client?.urlProtocolDidFinishLoading(self)
+}
+
+```
+We walk through the property inside the stub and invoke delegate methods in response to each situation.
+Moving back to the test file, we write our second test to examine it returns an error on a failing request.
+
+```swift
+func test_getFromURL_failsOnRequestError() {
+            
+    let requestError = NSError(domain: "any error", code: 1)
+        
+    URLProtocolStub.stub(data: nil, response: nil, error: requestError)
+    let sut = makeSUT()
+    let exp = expectation(description: "Wait for completion")
+
+    sut.load(request: anyGetRequest()) { result in
+        switch result {
+            case .failure(let receivedError):
+                XCTAssertNotNil(receivedError)
+            default:
+                XCTFail("Expected failure, got \(result) instead")
+        }
+        exp.fulfill()
+    }
+            
+    wait(for: [exp], timeout: 1.0)
+}
+```
+
 
 ```swift
 private class URLProtocolStub: URLProtocol {
@@ -263,23 +339,6 @@ private class URLProtocolStub: URLProtocol {
         override func stopLoading() {}
     }
     ```
-
-    ```swift
-    final class URLSessionAPIClientTests: XCTestCase {
-
-        override func setUpWithError() throws {
-            try super.setUpWithError()
-            URLProtocolStub.startInterceptingRequests()
-        }
-
-        override func tearDownWithError() throws {
-            try super.tearDownWithError()
-            URLProtocolStub.stopInterceptingRequests()
-        }
-    }
-    ```
-
-    helpers
 
     ```swift
     
