@@ -251,7 +251,7 @@ override func startLoading() {
 
 ```
 We walk through the property inside the stub and invoke delegate methods in response to each situation.
-Moving back to the test file, we write our second test to examine it returns an error on a failing request.
+Moving back to the test file, we write our second test to examine if it returns an error on a failing request.
 
 ```swift
 func test_getFromURL_failsOnRequestError() {
@@ -275,119 +275,62 @@ func test_getFromURL_failsOnRequestError() {
     wait(for: [exp], timeout: 1.0)
 }
 ```
-
+Of course, we can further wrap up the process above to improve its reusability. We encapsulate the logic into a function `resultFor`. According to the result type, we tailor two more functions to address success and failure cases.
 
 ```swift
-private class URLProtocolStub: URLProtocol {
-        private static var stub: Stub?
-        private static var requestObserver: ((URLRequest) -> Void)?
+private func resultFor(data: Data?, response: URLResponse?, error: Error?) -> APIClient.Result {
+    URLProtocolStub.stub(data: data, response: response, error: error)
+    let sut = makeSUT(file: file, line: line)
+    let exp = expectation(description: "Wait for completion")
         
-        private struct Stub {
-            let data: Data?
-            let response: URLResponse?
-            let error: Error?
-        }
-        
-        static func observeRequests(observer: @escaping (URLRequest) -> Void) {
-            requestObserver = observer
-        }
-        
-        static func stub(data: Data?, response: URLResponse?, error: Error?) {
-            stub = Stub(data: data, response: response, error: error)
-        }
-        
-        static func startInterceptingRequests() {
-            URLProtocol.registerClass(URLProtocolStub.self)
-        }
-        
-        static func stopInterceptingRequests() {
-            URLProtocol.unregisterClass(URLProtocolStub.self)
-            requestObserver = nil
-            stub = nil
-        }
-        
-        override class func canInit(with request: URLRequest) -> Bool {
-            return true
-        }
-        
-        override class func canonicalRequest(for request: URLRequest) -> URLRequest {
-            return request
-        }
-        
-        override func startLoading() {
-            
-            if let requestObserver = URLProtocolStub.requestObserver {
-                client?.urlProtocolDidFinishLoading(self)
-                return requestObserver(request)
-            }
-            
-            if let data = URLProtocolStub.stub?.data {
-                client?.urlProtocol(self, didLoad: data)
-            }
-            
-            if let response = URLProtocolStub.stub?.response {
-                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-            }
-            
-            if let error = URLProtocolStub.stub?.error {
-                client?.urlProtocol(self, didFailWithError: error)
-            }
-            
-            client?.urlProtocolDidFinishLoading(self)
-        }
-        
-        override func stopLoading() {}
+    var receivedResult: APIClient.Result!
+    sut.load(request: anyGetRequest()) { result in
+        receivedResult = result
+        exp.fulfill()
     }
-    ```
+        
+    wait(for: [exp], timeout: 1.0)
+    return receivedResult
+}
 
-    ```swift
-    
-    private func resultFor(data: Data?, response: URLResponse?, error: Error?) -> HTTPClient.Result {
+// For success cases
+private func resultValuesFor(data: Data?, response: URLResponse?, error: Error?) -> (data: Data, response: HTTPURLResponse)? {
+    let result = resultFor(data: data, response: response, error: error)
         
-        URLProtocolStub.stub(data: data, response: response, error: error)
-        let sut = makeSUT()
-        let exp = expectation(description: "Wait for completion")
-        
-        var receivedResult: HTTPClient.Result!
-        sut.load(request: anyGetRequest()) { result in
-            receivedResult = result
-            exp.fulfill()
-        }
-        
-        wait(for: [exp], timeout: 1.0)
-        return receivedResult
+    switch result {
+        case let .success((data, response)):
+            return (data, response)
+        default:
+            XCTFail("Expected success, got \(result) instead")
+            return nil
     }
-    
-    private func anyGetRequest() -> URLRequest {
-        return URLRequest(url: .init(string: "http://any-url.com")!)
-    }
-    ```
+}
 
-    test
-    ```swift
-    func test_getFromURL_performsGETRequestWithURL() {
+// For failure cases   
+private func resultErrorFor(data: Data?, response: URLResponse?, error: Error?) -> Error? {
         
-        let url = URL(string: "http://any-url.com")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        let exp = expectation(description: "Wait for request")
+let result = resultFor(data: data, response: response, error: error)
         
-        URLProtocolStub.observeRequests { request in
-            XCTAssertEqual(request.url, url)
-            XCTAssertEqual(request.httpMethod, "GET")
-            exp.fulfill()
-        }
-        
-        makeSUT().load(request: request) { _ in }
-        
-        wait(for: [exp], timeout: 1.0)
+switch result {
+    case let .failure(error):
+        return error
+    default:
+        XCTFail("Expected failure, got \(result) instead")
+        return nil
     }
-    
-    func test_getFromURL_failsOnRequestError() {
+}
+```
+By doing so, we are capable of testing different types of responding cases. The former test will morph into the following code:
+
+```swift
+func test_getFromURL_failsOnRequestError() {
         
-        let requestError = NSError(domain: "any error", code: 1)
-        let receivedError = resultFor(data: nil, response: nil, error: requestError)
+    let requestError = NSError(domain: "any error", code: 1)
+    let receivedError = resultErrorFor(data: nil, response: nil, error: requestError)
         
-        XCTAssertNotNil(receivedError)
-    }
-    ```
+    XCTAssertNotNil(receivedError)
+}
+```
+For more test cases and complete URLProtocolStub code, you can go to my GitHub gists to check them out.
+
+That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 🧪
