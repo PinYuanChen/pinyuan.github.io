@@ -64,16 +64,18 @@ final class URLSessionAPIClientTests: XCTestCase {
 }
 ```
 
-Time to write some tests. We want to verify the behaviors of `URLSessionAPIClient` align with our expectations. First, we want to test it can correctly make a GET request by checking its url and http method.
+Time to write some tests. We aim to ensure that the behaviors of `URLSessionAPIClient` match our expectations. Initially, we'll assess if it can accurately initiate a GET request.
 
 ```swift
 func test_getFromURL_performsGETRequestWithURL() { }    
 ```
 
-Here comes a problem: how can we make a request using a fake url? We must utilize something to intercept the request and return the response as what we want. And here comes a handy tool called `URLProtocol`, which fulfills what we need.
-Don't be fooled by its name. `URLProtocol` is actually a `class` that exists in iOS's URL loading system. When we fire a url session request, the system automatically creates a `URLProtocol` instance to handle the task. All we have to do is to stub `URLProtocol` and intercept the request by implementing required methods.
+A challenge arises: how can we initiate a request using a mock URL? 
 
-Upon sub classing `URLProtocol`, we need to implement four required methods.
+The solution lies in intercepting the request to return a response aligning with our specifications. And here comes a handy tool called `URLProtocol`, which fulfills what we need. Contrary to its nomenclature, `URLProtocol` is not a protocol but a class. It's an object within URL loading system. Whenever a URL session request is made, the system autonomously spawns a `URLProtocol` instance to oversee the task. Our task, then, is to mock `URLProtocol` and hijack the request by defining the necessary methods.
+
+When subclassing `URLProtocol`, there are four essential methods to implement.
+
 >
 class func canInit(with request: URLRequest)
 class func canonicalRequest(for request: URLRequest) -> URLRequest
