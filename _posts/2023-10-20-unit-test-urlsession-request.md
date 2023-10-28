@@ -13,18 +13,19 @@ As to the first question, the answer is "YES". Even without a complete server, y
 These(Unit tests) are characterized by being simple to read, producing clear failure messages when we detect a problem, and by running very quickly, often in the order of hundreds or thousands of tests per minute.
 >
 
-This post is going to cover how to write unit tests for requests without actually firing networking task. I will probably write a post about end-to-end tests in the future, but right now let's just focus on the unit test topic.
+In this post, I'll delve into writing unit tests for requests without actually initiating network tasks. I will probably write another post about end-to-end tests in the future, for now, our focus will solely be on unit testing.
 
-The following is a typical API protocol that defines the result and the load function.
+Below is a conventional API protocol that outlines the result and the corresponding load function.
+
 ```swift
 public protocol APIClient {
     typealias Result = Swift.Result<(Data, HTTPURLResponse), Error>
-    
     func load(request: URLRequest, completion: @escaping (Result) -> Void)
 }
 ```
 
-We create a class named `URLSessionAPIClient` and make it conform to `APIClient` protocol.
+We've created a class called `URLSessionAPIClient` that conforms to the `APIClient` protocol.
+
 ```swift
 public class URLSessionAPIClient: APIClient {
     private let session: URLSession
@@ -50,7 +51,8 @@ public class URLSessionAPIClient: APIClient {
     }
 }
 ```
-It holds a `URLSession` property and use it to make requests. You can either inject a  `URLSession` instance or use the default `shared` one. Then we move on to create a new test file called `URLSessionAPIClientTests`. We adopt the factory method mentioned [before](https://pinyuanchen.github.io/posts/xctestcase-sut/) to create instances for our tests. 
+
+This class contains a `URLSession` property, which it utilizes for making requests. You have the option to inject a `URLSession` instance or to use the default `shared` one. Next, we'll establish a test file named `URLSessionAPIClientTests`. For creating instances in our tests, we'll use the previously mentioned [factory method](https://pinyuanchen.github.io/posts/xctestcase-sut/).
 
 ```swift
 final class URLSessionAPIClientTests: XCTestCase {
