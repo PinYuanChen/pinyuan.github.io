@@ -178,12 +178,13 @@ override func tearDownWithError() throws {
 }
 ```
 
-Now let's shift to the `test_getFromURL_performsGETRequestWithURL`. The testing process will be like 
-(1) Setup the request details(GET request).
-(2) Setup a expectation instance that waits for asynchronous execution.
-(3) Inject a closure that returns a URLRequest to `URLProtocolStub.observeRequests`. Verify the URL and httMethod inside this closure and fulfill the expectation to end the test.
-(4) Fire the request.
-(5) Wait for completion.
+Now let's shift back to the `test_getFromURL_performsGETRequestWithURL`. The testing sequence follows these steps:
+
+(1) Configure the request details (GET request).
+(2) Establish an expectation instance to anticipate asynchronous execution.
+(3) Use `URLProtocolStub.observeRequests` to inject a closure that retrieves a URLRequest. Within this closure, validate the URL and httpMethod, then fulfill the expectation to conclude the test.
+(4) Initiate the request.
+(5) Await its completion.
 
 ```swift
 func test_getFromURL_performsGETRequestWithURL() {
@@ -204,10 +205,11 @@ func test_getFromURL_performsGETRequestWithURL() {
 }
 ```
 
-Run the test and you will see it pass. Our `URLProtocolStub` does perform well behind the scene. 
+Upon running the test, it should pass successfully, demonstrating the efficient workings of our `URLProtocolStub`. 
 
-Now we want to test more scenarios, such as data, error, and url response. How can we do that? 
-Similar to what we do for the request callback, we add other properties and functions inside `URLProtocolStub` to store information. Let's add a private structure `Stub` comprised of information we care about, and add a static function as a interface for storage.
+However, we aim to test additional details, like data, error, and URL responses. How can we accomplish this?
+
+Taking cues from our request callback setup, we'll introduce more properties and methods in `URLProtocolStub` for data storage. We'll integrate a private `Stub` structure that houses the relevant information and a static function serving as an interface for data storage.
 
 ```swift
 private class URLProtocolStub: URLProtocol {
@@ -228,7 +230,7 @@ private class URLProtocolStub: URLProtocol {
 }
 ```
 
-Then we add some code to the `startLoading` function to check these info iteratively.
+Subsequent to this, we'll enhance the `startLoading` function, enabling it to iterate through and verify this stored information.
 
 ```swift
 override func startLoading() {
@@ -254,8 +256,9 @@ override func startLoading() {
 }
 
 ```
-We walk through the property inside the stub and invoke delegate methods in response to each situation.
-Moving back to the test file, we write our second test to examine if it returns an error on a failing request.
+Within the stub, we'll traverse each property, triggering delegate methods corresponding to each scenario.
+
+Returning to the test file, our next task is to script a secondary test, ensuring it flags an error for a failed request.
 
 ```swift
 func test_getFromURL_failsOnRequestError() {
