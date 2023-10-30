@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'Using URLProtocol for Unit Test'
+title: 'Mocking Network Requests with URLProtocol'
 categories: [iOS dev]
 tag: [swift, url protocol, url session, unit test, networking]
 ---
@@ -282,7 +282,7 @@ func test_getFromURL_failsOnRequestError() {
     wait(for: [exp], timeout: 1.0)
 }
 ```
-Of course, we can further wrap up the process above to improve its reusability. We encapsulate the logic into a function `resultFor`. According to the result type, we tailor two more functions to address success and failure cases.
+We can certainly streamline the aforementioned process for better reusability. We'll move the logic into a `resultFor` function. Depending on the result type, we'll devise two supplementary functions specifically for success and failure scenarios.
 
 ```swift
 private func resultFor(data: Data?, response: URLResponse?, error: Error?) -> APIClient.Result {
@@ -327,7 +327,7 @@ switch result {
     }
 }
 ```
-By doing so, we are capable of testing different types of responding cases. The former test will morph into the following code:
+This refactoring empowers us to test a diverse range of response scenarios. Consequently, our initial test will be transformed as outlined:
 
 ```swift
 func test_getFromURL_failsOnRequestError() {
@@ -338,6 +338,6 @@ func test_getFromURL_failsOnRequestError() {
     XCTAssertNotNil(receivedError)
 }
 ```
-For more test cases and complete URLProtocolStub code, you can go to my GitHub gists to check them out.
+For a comprehensive list of test cases and the complete URLProtocolStub code, feel free to check out my GitHub gists.
 
 That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 🧪
