@@ -72,7 +72,7 @@ func test_getFromURL_performsGETRequestWithURL() { }
 
 A challenge arises: how can we initiate a request using a mock URL? 
 
-The solution lies in intercepting the request to return a response aligning with our specifications. And here comes a handy tool called `URLProtocol`, which fulfills what we need. Contrary to its nomenclature, `URLProtocol` is not a protocol but a class. It's an object within URL loading system. Whenever a URL session request is made, the system autonomously spawns a `URLProtocol` instance to oversee the task. Our task, then, is to mock `URLProtocol` and hijack the request by defining the necessary methods.
+The solution lies in intercepting the request to return a response aligning with our specifications. And here comes a handy tool called `URLProtocol`, which fulfills what we need. Despite its name, `URLProtocol` isn't a protocol but rather a class within the URL loading system. When a URL session request is initiated, the system automatically creates a `URLProtocol` instance to manage the process. Our objective is to simulate `URLProtocol` and intercept the request by implementing the requisite methods.
 
 When subclassing `URLProtocol`, there are four essential methods to implement.
 
@@ -83,7 +83,7 @@ func startLoading()
 func stopLoading()
 >
 
-The core section is `startLoading`, at this step we will check if we have anything stubbed beforehand and return them as responses. That is, we intercept the request here.  We implement the four requirements like the following:
+In the `startLoading` section lies the crux of our implementation. Here, we'll ascertain if any stubbed data exists and, if so, return them as responses, essentially intercepting the request. The four methods are implemented as follows:
 
 ```swift
 private class URLProtocolStub: URLProtocol {
@@ -103,7 +103,7 @@ private class URLProtocolStub: URLProtocol {
 }
 ```
 
-For `canInit`, we simply return `true` to pass the validation of request eligibility, and so does the `canonicalRequest`. Since we don't need to do anything on `stopLoading`, we just leave it empty. Now we are gonna focus on `startLoading` method. We need a property to store the request and verify it later. We can simply use a closure property to achieve that.
+For `canInit`, we straightforwardly return `true`, ensuring the request is valid, and the same logic applies to `canonicalRequest`. As there's no need for any specific action in `stopLoading`, it remains empty. Our primary focus then shifts to the `startLoading` method. We'll require a property to capture and later verify the request. This can be achieved using a closure property.
 
 ```swift
 private class URLProtocolStub: URLProtocol {
@@ -114,7 +114,7 @@ private class URLProtocolStub: URLProtocol {
     }
 }
 ```
-Since the URL loading system creates the `URLProtocol` instance underneath the hood, we cannot control its creation so we declare `requestObserver` as a static property. We also setup a static function `observeRequests` to provide a interface for outsiders to store the property. Then in the `startLoading` function we add the code:
+Given that the URL loading system autonomously creates the `URLProtocol` instance, we lack control over its instantiation. As a workaround, we designate `requestObserver` as a static property. Furthermore, we introduce a static function, `observeRequests`, furnishing an external interface for storing the property. Subsequently, we append the following code to the `startLoading` function:"
 
 ```swift
 override func startLoading() {
@@ -126,9 +126,9 @@ override func startLoading() {
 }
 
 ```
-The code detect if the request observer exists, then it finish the loading immediately and evoke the callback. 
+The code checks for the presence of a request observer. If it finds one, it completes the loading and triggers the callback.
 
-Let's move back to the test file. Before you begin testing, there is one more key step to settle down the URLProtocol. In `setupWithError`, we need to register our `URLProtocolStub` to make it works.
+Now, returning to the test file. Before diving into testing, there's an essential step to finalize the `URLProtocol`. In `setupWithError`, it's crucial to register our `URLProtocolStub` to ensure its functionality.
 
 ```swift
 override func setUpWithError() throws {
@@ -137,7 +137,7 @@ override func setUpWithError() throws {
 }
 ```
 
-Besides, in `tearDownWithError` we need to unregister it and also release the observer closure. 
+Additionally, in `tearDownWithError`, it's necessary to unregister it and also release the observer closure.
 
 ```swift
 override func tearDownWithError() throws {
@@ -147,7 +147,7 @@ override func tearDownWithError() throws {
 }
 ```
 
-To make them more readable, we wrap them up into two static functions, identifying their usages, in `URLProtocolStub`.
+For clarity, we encapsulate these steps into two static functions within `URLProtocolStub`, signifying their specific roles.
 
 ```swift
 private class URLProtocolStub: URLProtocol {
@@ -164,7 +164,7 @@ private class URLProtocolStub: URLProtocol {
     //...
 }
 ```
-In the test file, we modify the calling as below:
+In the test file, the adjustments are made as follows:
 
 ```swift
 override func setUpWithError() throws {
