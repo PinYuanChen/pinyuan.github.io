@@ -60,7 +60,7 @@ This class contains a `URLSession` property, which it utilizes for making reques
 
 ```swift
 final class URLSessionAPIClientTests: XCTestCase {
-    // MARK: Helpers
+    // MARK: - Helpers
     private func makeSUT() -> APIClient {
         let sut = URLSessionAPIClient()
         return sut
@@ -337,7 +337,7 @@ switch result {
     }
 }
 ```
-This refactoring empowers us to test a diverse range of response scenarios. Consequently, our initial test will be transformed as outlined:
+Consequently, our initial test will be transformed as outlined:
 
 ```swift
 func test_getFromURL_failsOnRequestError() {
@@ -348,6 +348,6 @@ func test_getFromURL_failsOnRequestError() {
     XCTAssertNotNil(receivedError)
 }
 ```
-For a comprehensive list of test cases and the complete URLProtocolStub code, feel free to check out my GitHub [gist](https://gist.github.com/PinYuanChen/d4bb4c70b4973f3eeea8abb103356260).
+This refactoring empowers us to test a diverse range of response scenarios. We can exhaustively test various combinations of data, response, and error, making our tests more robust. For a comprehensive list of test cases and the complete `URLProtocolStub` code, feel free to check out my GitHub [gist](https://gist.github.com/PinYuanChen/d4bb4c70b4973f3eeea8abb103356260).
 
 That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 🧪
