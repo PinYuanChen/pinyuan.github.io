@@ -5,6 +5,10 @@ categories: [iOS dev]
 tag: [swift, url protocol, url session, unit test, networking]
 ---
 
+>
+*Notice:* The content presented in this blog post is inspired by and derived from the [Essential Developer](https://www.essentialdeveloper.com/) course. All credit for the foundational concepts and methodologies goes to the creators of this course. This post is an attempt to share and expand upon the knowledge I've gained from it.
+>
+
 At the early stages of development, it's common for the backend server to be unfinished. So, how can app developers create tests for network requests in these situations? Furthermore, even with a functioning server, unstable network conditions can lead to inconsistent test results and longer test durations, potentially slowing development. How can we tackle these challenges while still ensuring robust testing for our apps?
 
 As to the first question, the answer is "YES". Even without a complete server, you can still craft tests to assess various scenarios using networking frameworks like URLSession, Alamofire, and others. According to Apple's testing guidelines presented in [WWDC]('https://developer.apple.com/videos/play/wwdc2018/417'), our test suite should resemble a pyramid. At its base are numerous unit tests, followed by a smaller set of medium-sized integration tests, and capped off with a select few end-to-end tests.
@@ -56,7 +60,7 @@ This class contains a `URLSession` property, which it utilizes for making reques
 
 ```swift
 final class URLSessionAPIClientTests: XCTestCase {
-    // helpers
+    // MARK: Helpers
     private func makeSUT() -> APIClient {
         let sut = URLSessionAPIClient()
         return sut
@@ -151,7 +155,7 @@ For clarity, we encapsulate these steps into two static functions within `URLPro
 
 ```swift
 private class URLProtocolStub: URLProtocol {
-    //...
+    ...
     static func startInterceptingRequests() {
         URLProtocol.registerClass(URLProtocolStub.self)
     }
@@ -161,7 +165,7 @@ private class URLProtocolStub: URLProtocol {
         requestObserver = nil
         stub = nil
     }
-    //...
+    ...
 }
 ```
 In the test file, the adjustments are made as follows:
@@ -222,7 +226,7 @@ private class URLProtocolStub: URLProtocol {
         let error: Error?
     }
 
-    //...
+    ...
         
     static func stub(data: Data?, response: URLResponse?, error: Error?) {
         stub = Stub(data: data, response: response, error: error)
@@ -281,13 +285,19 @@ func test_getFromURL_failsOnRequestError() {
             
     wait(for: [exp], timeout: 1.0)
 }
+
+// MARK: - Helpers
+...
+private func anyGetRequest() -> URLRequest {
+    return .init(url: .init(string: "http://any-url.com")!)
+}
 ```
 We can certainly streamline the aforementioned process for better reusability. We'll move the logic into a `resultFor` function. Depending on the result type, we'll devise two supplementary functions specifically for success and failure scenarios.
 
 ```swift
 private func resultFor(data: Data?, response: URLResponse?, error: Error?) -> APIClient.Result {
     URLProtocolStub.stub(data: data, response: response, error: error)
-    let sut = makeSUT(file: file, line: line)
+    let sut = makeSUT()
     let exp = expectation(description: "Wait for completion")
         
     var receivedResult: APIClient.Result!
@@ -338,6 +348,6 @@ func test_getFromURL_failsOnRequestError() {
     XCTAssertNotNil(receivedError)
 }
 ```
-For a comprehensive list of test cases and the complete URLProtocolStub code, feel free to check out my GitHub gists.
+For a comprehensive list of test cases and the complete URLProtocolStub code, feel free to check out my GitHub [gist](https://gist.github.com/PinYuanChen/d4bb4c70b4973f3eeea8abb103356260).
 
 That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 🧪
