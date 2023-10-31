@@ -9,7 +9,7 @@ tag: [swift, url protocol, url session, unit test, networking]
 *Notice:* The content presented in this blog post is inspired by and derived from the [Essential Developer](https://www.essentialdeveloper.com/) course. All credit for the foundational concepts and methodologies goes to the creators of this course. This post is an attempt to share and expand upon the knowledge I've gained from it.
 >
 
-At the early stages of development, it's common for the backend server to be unfinished. So, how can app developers create tests for network requests in these situations? Furthermore, even with a functioning server, unstable network conditions can lead to inconsistent test results and longer test durations, potentially slowing development. How can we tackle these challenges while still ensuring robust testing for our apps?
+At the early stages of development, it's common for the backend server to be not ready yet. So, how can we app developers create tests for network requests in such situations? Furthermore, even with a functioning server, unstable network conditions can cause flaky test results and longer test durations, potentially slowing development. How can we tackle these challenges while still ensuring robust testing for our apps?
 
 As to the first question, the answer is "YES". Even without a complete server, you can still craft tests to assess various scenarios using networking frameworks like URLSession, Alamofire, and others. According to Apple's testing guidelines presented in [WWDC](https://developer.apple.com/videos/play/wwdc2018/417), our test suite should resemble a pyramid. At its base are numerous unit tests, followed by a smaller set of medium-sized integration tests, and capped off with a select few end-to-end tests.
  
@@ -19,7 +19,7 @@ These(Unit tests) are characterized by being simple to read, producing clear fai
 
 In this post, I'll delve into writing unit tests for requests without actually initiating network tasks. I will probably write another post about end-to-end tests in the future, for now, our focus will solely be on unit testing.
 
-Below is a conventional API protocol that outlines the result and the corresponding load function.
+Below is a typical API protocol that outlines the typealias result and the load function.
 
 ```swift
 public protocol APIClient {
@@ -56,7 +56,7 @@ public class URLSessionAPIClient: APIClient {
 }
 ```
 
-This class contains a `URLSession` property, which it utilizes for making requests. You have the option to inject a `URLSession` instance or to use the default `shared` one. Next, we'll establish a test file named `URLSessionAPIClientTests`. For creating instances in our tests, we'll use the previously mentioned [factory method](https://pinyuanchen.github.io/posts/xctestcase-sut/).
+This class holds a `URLSession` property, which it utilizes for making requests. You have the option to inject a `URLSession` instance or to use the default `shared` one. Next, we'll establish a test file named `URLSessionAPIClientTests`. For creating instances in our tests, we'll use the previously mentioned [factory method](https://pinyuanchen.github.io/posts/xctestcase-sut/).
 
 ```swift
 final class URLSessionAPIClientTests: XCTestCase {
@@ -68,15 +68,17 @@ final class URLSessionAPIClientTests: XCTestCase {
 }
 ```
 
-Time to write some tests. We aim to ensure that the behaviors of `URLSessionAPIClient` match our expectations. Initially, we'll assess if it can accurately initiate a GET request.
+Time to write some tests. 📝
+
+We aim to ensure that the behaviors of `URLSessionAPIClient` match our expectations. Initially, we'll check if it can accurately initiate a GET request.
 
 ```swift
 func test_getFromURL_performsGETRequestWithURL() { }    
 ```
 
-A challenge arises: how can we initiate a request using a mock URL? 
+Here comes a problem: how can we initiate a request using a mock URL? 
 
-The solution lies in intercepting the request to return a response aligning with our specifications. And here comes a handy tool called `URLProtocol`, which fulfills what we need. Despite its name, `URLProtocol` isn't a protocol but rather a class within the URL loading system. When a URL session request is initiated, the system automatically creates a `URLProtocol` instance to manage the process. Our objective is to simulate `URLProtocol` and intercept the request by implementing the requisite methods.
+The solution lies in intercepting the request to return a response aligning with our specifications. And there is a handy tool called `URLProtocol`, which fulfills what we need. Despite its name, `URLProtocol` isn't a protocol but a class. When a URL session request is initiated, the URL loading system automatically creates a `URLProtocol` instance behind the scene to manage the process. Our objective is to simulate `URLProtocol` and intercept the request by implementing the requisite methods.
 
 When subclassing `URLProtocol`, there are four essential methods to implement.
 
@@ -107,7 +109,8 @@ private class URLProtocolStub: URLProtocol {
 }
 ```
 
-For `canInit`, we straightforwardly return `true`, ensuring the request is valid, and the same logic applies to `canonicalRequest`. As there's no need for any specific action in `stopLoading`, it remains empty. Our primary focus then shifts to the `startLoading` method. We'll require a property to capture and later verify the request. This can be achieved using a closure property.
+For `canInit`, we straightforwardly return `true`, ensuring the request is valid, and the same logic applies to `canonicalRequest`. As there's no need for any specific action in `stopLoading`, we leave it empty. 
+Shift back to the `startLoading` method. We'll require a property to capture and later verify the request. This can be achieved by using a closure property.
 
 ```swift
 private class URLProtocolStub: URLProtocol {
@@ -118,7 +121,8 @@ private class URLProtocolStub: URLProtocol {
     }
 }
 ```
-Given that the URL loading system autonomously creates the `URLProtocol` instance, we lack control over its instantiation. As a workaround, we designate `requestObserver` as a static property. Furthermore, we introduce a static function, `observeRequests`, furnishing an external interface for storing the property. Subsequently, we append the following code to the `startLoading` function:"
+
+Given that the URL loading system autonomously creates the `URLProtocol` instance, we are not allowed to control its instantiation. As a workaround, we designate `requestObserver` as a static property. Furthermore, we introduce a static function, `observeRequests`, furnishing an external interface for storing the property. Subsequently, we append the following code to the `startLoading` function:"
 
 ```swift
 override func startLoading() {
@@ -130,6 +134,7 @@ override func startLoading() {
 }
 
 ```
+
 The code checks for the presence of a request observer. If it finds one, it completes the loading and triggers the callback.
 
 Now, returning to the test file. Before diving into testing, there's an essential step to finalize the `URLProtocol`. In `setupWithError`, it's crucial to register our `URLProtocolStub` to ensure its functionality.
@@ -182,12 +187,16 @@ override func tearDownWithError() throws {
 }
 ```
 
-Now let's shift back to the `test_getFromURL_performsGETRequestWithURL`. The testing sequence follows these steps:
+Now let's move back to the `test_getFromURL_performsGETRequestWithURL`. The testing sequence follows these steps:
 
 (1) Configure the request details (GET request).
+
 (2) Establish an expectation instance to anticipate asynchronous execution.
+
 (3) Use `URLProtocolStub.observeRequests` to inject a closure that retrieves a URLRequest. Within this closure, validate the URL and httpMethod, then fulfill the expectation to conclude the test.
+
 (4) Initiate the request.
+
 (5) Await its completion.
 
 ```swift
@@ -261,6 +270,16 @@ override func startLoading() {
 
 ```
 Within the stub, we'll traverse each property, triggering delegate methods corresponding to each scenario.
+
+And remember to clear the stub property inside `stopInterceptingRequests`.
+
+```swift
+static func stopInterceptingRequests() {
+    URLProtocol.unregisterClass(URLProtocolStub.self)
+    requestObserver = nil
+    stub = nil
+}
+```
 
 Returning to the test file, our next task is to script a secondary test, ensuring it flags an error for a failed request.
 
