@@ -17,9 +17,9 @@ As to the first question, the answer is "YES". Even without a complete server, y
 These(Unit tests) are characterized by being simple to read, producing clear failure messages when we detect a problem, and by running very quickly, often in the order of hundreds or thousands of tests per minute.
 >
 
-In this post, I'll delve into writing unit tests for requests without actually initiating network tasks. I will probably write another post about end-to-end tests in the future, for now, our focus will solely be on unit testing.
+In this post, I'll delve into writing unit tests for requests without actually initiating network tasks. I will probably write another post about end-to-end tests in the future, for now, let's focus solely on unit testing.
 
-Below is a typical API protocol that outlines the typealias result and the load function.
+Below is a typical API protocol that outlines a typealias result and a load function.
 
 ```swift
 public protocol APIClient {
@@ -78,7 +78,7 @@ func test_getFromURL_performsGETRequestWithURL() { }
 
 Here comes a problem: how can we initiate a request using a mock URL? 
 
-The solution lies in intercepting the request to return a response aligning with our specifications. And there is a handy tool called `URLProtocol`, which fulfills what we need. Despite its name, `URLProtocol` isn't a protocol but a class. When a URL session request is initiated, the URL loading system automatically creates a `URLProtocol` instance behind the scene to manage the process. Our objective is to simulate `URLProtocol` and intercept the request by implementing the requisite methods.
+The solution lies in intercepting the request and return a response aligning with our specifications. `URLProtocol` is the handy tool that fulfills what we need. Despite its name, `URLProtocol` isn't a protocol but a class. When a URL session request is initiated, the URL loading system automatically creates a `URLProtocol` instance behind the scene to manage the process. Our objective is to simulate `URLProtocol` and intercept the request by implementing the requisite methods.
 
 When subclassing `URLProtocol`, there are four essential methods to implement.
 
