@@ -83,5 +83,3 @@ func test_empty_password {
 ```
 
 In this way, we easily resolve the configuration issue. By creating the SUT within each test case, as it lives in the test case scope, also improves readability. But it doesn't mean the `setUpWithError` function is useless. In some cases, when global state needs to be set up and torn down, such as a singleton or database, using the `setUpWithError` and `tearDownWithError` may be a suitable choice.
-
-That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 😷

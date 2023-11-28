@@ -21,5 +21,4 @@ Dmitry Deplov handled [this issue](https://medium.com/@dmitrydeplov/coredata-clo
 
 After all these efforts, it sets me thinking that when implementing a new feature, even if it's provided by Apple, don't assume seamless integration. Despite official documentation, there are often many missing pieces, leaving developers to craft their own solutions.
 
-That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 🪣
 

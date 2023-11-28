@@ -54,5 +54,3 @@ The case of using throttle is in any situation you want to trigger it when the f
     .disposed(by: disposeBag)
 ```
 Remember, if you don't set the `latest` to `false`, you will receive both the first and the last items.
-
-That’s it. If you have any questions or recommendations, please leave a comment below. See you at the top!

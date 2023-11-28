@@ -161,5 +161,3 @@ subscription = NetworkManager
                 // the same
             })
 ```
-
-That's it! If you have any questions or recommendations, please leave a comment down below. See you at the top! 👊
