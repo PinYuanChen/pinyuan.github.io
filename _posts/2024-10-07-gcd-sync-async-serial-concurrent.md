@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'GCD: Understand sync, async and serial, concurrent'
+title: 'GCD: Understand Sync/Async and Serial/Concurrent'
 categories: [iOS dev]
 tag: [swift, gcd, thread, queue, serial, concurrent]
 ---
@@ -20,7 +20,7 @@ Main Thread and Background Thread
 Main Thread: The primary thread where UI operations and event handling occur. It's crucial for maintaining a responsive user interface.
 Background Thread: Any thread other than the main thread. Used for time-consuming tasks to prevent blocking the main thread.
 
-## Sync and Async
+## Sync/Async
 These are thread's features, describing the way they execute code.
 
 Sync (Synchronous): Executes code sequentially, blocking the current thread until the task completes.
@@ -40,7 +40,7 @@ DispatchQueue.main.async {
 
 Unlike main queue, there can be many queues running on background threads. You can either use global queues provided by the system, or create your own custom ones.
 
-## Serial and Concurrent
+## Serial/Concurrent
 These two are queue's features.
 Serial Queue: Executes one task at a time in the order they were added.
 Concurrent Queue: Can execute multiple tasks simultaneously.
@@ -80,10 +80,28 @@ Simple and predictable, but can lead to deadlocks if not used carefully.
 
 ```swift
 let serialQueue = DispatchQueue(label: "com.example.serialQueue")
-serialQueue.sync {
-    print("Task executed synchronously on serial queue")
+
+func performTask(id: Int) {
+    print("Task \(id) starts")
+    Thread.sleep(forTimeInterval: 1)
+    print("Task \(id) ends")
 }
-print("This will print after the task is completed")
+
+for i in 1...3 {
+    serialQueue.sync { performTask(id: i) }
+}
+print("Serial Sync finished")
+
+// Print result
+/*
+Task 1 starts
+Task 1 ends
+Task 2 starts
+Task 2 ends
+Task 3 starts
+Task 3 ends
+Serial Sync finished
+*/
 ```
 
 2. Async on Serial Queue
@@ -92,18 +110,97 @@ The calling thread continues execution immediately without waiting for the task 
 Useful for offloading tasks that need to be executed in a specific order without blocking the current thread.
 
 ```swift
-let serialQueue = DispatchQueue(label: "com.example.serialQueue")
-serialQueue.async {
-    print("Task executed asynchronously on serial queue")
+for i in 1...3 {
+    serialQueue.async { performTask(id: i) }
 }
-print("This may print before or after the task is completed")
+print("Serial Async finished（Notice：May still executing tasks）")
+
+// Print result
+/*
+Task 1 starts
+Serial Async finished（Notice：May still executing tasks）
+Task 1 ends
+Task 2 starts
+Task 2 ends
+Task 3 starts
+Task 3 ends
+*/
 ```
 
 3. Sync on Concurrent Queue
-Behavior: Multiple tasks can be executed simultaneously on different threads.
-The calling thread is blocked until the specific task it submitted completes.
-Other tasks on the concurrent queue may continue to execute in parallel.
+Behavior: The calling thread is blocked until the specific task it submitted completes.
 
 ```swift
+let concurrentQueue = DispatchQueue(label: "com.example.concurrentQueue", attributes: .concurrent)
 
+for i in 1...3 {
+    concurrentQueue.sync { performTask(id: i) }
+}
+print("Concurrent Sync finished")
+// Print result
+/*
+Task 1 starts
+Task 1 ends
+Task 2 starts
+Task 2 ends
+Task 3 starts
+Task 3 ends
+Concurrent Sync finished
+*/
+```
+In this example, tasks are dispatched from the same thread to a concurrent queue, the order of execution is preserved. 
+
+While this behavior might seem similar to a serial queue, it's important to note that a concurrent queue can still execute other tasks concurrently if they're dispatched from different threads.
+
+```swift
+for i in 1...6 {
+    if i % 2 == 0 {
+        DispatchQueue.global().sync {
+            concurrentQueue.sync { performTask(id: i) }
+        }
+    } else {
+        concurrentQueue.sync { performTask(id: i) }
+    }
+}
+print("Concurrent Sync finished")
+// Print result
+/*
+Task 1 starts
+Task 1 ends
+Task 3 starts
+Task 2 starts
+Task 3 ends
+Task 5 starts
+Task 4 starts
+Task 2 ends
+Task 5 ends
+Concurrent Sync finished
+Task 4 ends
+Task 6 starts
+Task 6 ends
+*/
+```
+
+4. Async on Concurrent Queue
+Behavior: Multiple tasks can be executed simultaneously on different threads.
+The calling thread continues execution immediately without waiting for the task to complete.
+Offers the highest level of concurrency and is ideal for independent, time-consuming tasks.
+
+```swift
+for i in 1...3 {
+    concurrentQueue.async { performTask(id: i) }
+}
+print("Concurrent Async finished（Notice：May still executing tasks）")
+
+// Print result
+/*
+Task 1 starts
+Task 2 starts
+Task 3 starts
+Concurrent Async finished（Notice：May still executing tasks）
+Task 3 ends
+Task 2 ends
+Task 1 ends
+*/
+// NOTICE: The order may change.
 ```
