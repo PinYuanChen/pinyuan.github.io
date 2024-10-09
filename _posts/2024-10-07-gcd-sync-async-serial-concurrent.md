@@ -96,14 +96,11 @@ Threads are actual paths of execution managed by the operating system. Queues ar
 
 It works like this:
 
-1. Queue Submission
-When you submit a task to a queue (background or otherwise), you're not directly assigning it to a specific thread.
+1. **Queue Submission:** When you submit a task to a queue (background or otherwise), you're not directly assigning it to a specific thread.
 
-2. Thread Assignment
-The system dynamically assigns tasks from queues to available threads in the thread pool. A single thread might execute tasks from different queues at different times.
+2. **Thread Assignment:** The system dynamically assigns tasks from queues to available threads in the thread pool. A single thread might execute tasks from different queues at different times.
 
-3. Concurrent Execution
-When using concurrent queues, multiple tasks can be executed simultaneously on different threads. But remember, a single thread executes only one task at a time, regardless of which queue it came from.
+3. **Concurrent Execution:** When using concurrent queues, multiple tasks can be executed simultaneously on different threads. But remember, a single thread executes only one task at a time, regardless of which queue it came from.
 
 ## Combinations of Sync/Async and Serial/Concurrent Queues
 **Sync on Serial Queue**
